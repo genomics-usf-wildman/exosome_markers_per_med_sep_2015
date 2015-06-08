@@ -1,0 +1,16 @@
+* Identifying an Exosome's Tissue of Origin Using RNA Expression Signatures
+ Exosomal vesicles are small extracellular vesicles which circulate in
+ blood and often contain RNA packaged *this is bad, fix it*. Because
+ exosomes contain mRNA from the tissue of origin and are easy to
+ obtain without intrusive procedures, they are a promising remote
+ sensor of the transcriptome of tissues which would otherwise be
+ inaccessible. A requirement for remotely sensing the transcriptome is
+ identifying the source tissue of a specific exosome. Therefore, we
+ have identified tissue-specific miRNA and mRNA markers for multiple
+ organs and tissues from existing RNAseq transcriptomes using the
+ tissue specificity index /cite Yanai/ and trained a multiclass
+ support vector machine to classify the tissue of origin. The accuracy
+ of the classifier was verified using RNAseq transcriptomes not in the
+ training set. We show the applicability of the classifier to
+ simulated exosomes by sampling reduced numbers of reads *not sure how
+ many RNA molecules are going to be in an exosome?*
