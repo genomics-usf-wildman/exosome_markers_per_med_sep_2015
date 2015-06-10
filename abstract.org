@@ -1,24 +1,25 @@
 * Identifying the Tissue of Origin of Extracellular Vesicles Using RNA Expression Signatures
- Extracellular vesicles (EVs) are small (40-1000nm) vesicles that can
- be found in blood, saliva, and urine. EVs originate from the plasma
- membrane or multivesicular endosome of many cell types and contain
- proteins, lipids, mRNA, miRNA, and many other non-coding RNAs.
- Because EVs contain mRNA from the cell of origin and can be obtained
- without invasive procedures, they are a promising remote sensor of
- the transcriptome of tissues which would otherwise be inaccessible.
- One requirement for remotely sensing the transcriptome is identifying
- the source tissue of a specific EV. To identify the source tissue of
- a specific EV, we have identified tissue-specific miRNA and mRNA
- markers for multiple organs and tissues from existing
- publicly-available RNAseq transcriptomes using a tissue specificity
- index and trained a multiclass support vector machine to classify the
- tissue of origin. Our approach identified MIR1914, MIR126, SNORD12,
- and SNORD5 as being uterus specific, and members of the PSG family as
- being placenta specific. The accuracy of the classifier was verified
- using RNAseq transcriptomes not in the training set. We show the
- applicability of the classifier to simulated EVs by down sampling
- reads to $10^5$ reads and biasing the reads to account for
- preferential association of RNA motifs with EV packaging machinery.
+ Extracellular vesicles (EVs) are small (40-1000nm) compartments that
+ can be found in blood, saliva, and urine. EVs originate from the
+ plasma membrane or multivesicular endosome of many cell types and
+ contain proteins, lipids, mRNA, miRNA, and many other non-coding
+ RNAs. Because EVs contain mRNA from the cell of origin and can be
+ obtained without invasive procedures, they are a promising remote
+ sensor of the transcriptome of tissues which would otherwise be
+ inaccessible. One requirement for remotely sensing the transcriptome
+ is identifying the source tissue of a specific EV. To identify the
+ source tissue of a specific EV, we have identified tissue-specific
+ miRNA and mRNA markers for multiple organs and tissues from existing
+ publicly-available RNAseq transcriptomes by calculating a tissue
+ specificity index and using machine learning techniques we trained a
+ multiclass support vector machine to classify the tissue of origin.
+ Our approach identified MIR1914, MIR126, SNORD12, and SNORD5 as being
+ uterus specific, and members of the PSG family as being placenta
+ specific. The accuracy of the classifier was verified using RNAseq
+ transcriptome data not in the training set. We show the applicability
+ of the classifier to simulated EVs by down sampling reads to $10^5$
+ reads and biasing the reads to account for preferential association
+ of RNA motifs with EV packaging machinery.
 
 * Concentration of RNA molecules in exosomes
   + http://www.journalofextracellularvesicles.net/index.php/jev/article/view/24858#F0005_24858
