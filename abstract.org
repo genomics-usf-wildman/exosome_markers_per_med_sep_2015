@@ -1,16 +1,34 @@
-* Identifying an Exosome's Tissue of Origin Using RNA Expression Signatures
- Exosomal vesicles are small extracellular vesicles which circulate in
- blood and often contain RNA packaged *this is bad, fix it*. Because
- exosomes contain mRNA from the tissue of origin and are easy to
- obtain without intrusive procedures, they are a promising remote
- sensor of the transcriptome of tissues which would otherwise be
- inaccessible. A requirement for remotely sensing the transcriptome is
- identifying the source tissue of a specific exosome. Therefore, we
- have identified tissue-specific miRNA and mRNA markers for multiple
- organs and tissues from existing RNAseq transcriptomes using the
- tissue specificity index /cite Yanai/ and trained a multiclass
- support vector machine to classify the tissue of origin. The accuracy
- of the classifier was verified using RNAseq transcriptomes not in the
- training set. We show the applicability of the classifier to
- simulated exosomes by sampling reduced numbers of reads *not sure how
- many RNA molecules are going to be in an exosome?*
+* Identifying the Tissue of Origin of Extracellular Vesicles Using RNA Expression Signatures
+ Extracellular vesicles (EVs) are small (40-1000nm) vesicles can be
+ found in blood, saliva, and urine. EVs originate from the plasma
+ membrane or multivesicular endosome of many cell types and contain
+ proteins, lipids, mRNA, miRNA, and many other non-coding RNAs.
+ Because EVs contain mRNA from the cell of origin and can be obtained
+ without invasive procedures, they are a promising remote sensor of
+ the transcriptome of tissues which would otherwise be inaccessible.
+ One requirement for remotely sensing the transcriptome is identifying
+ the source tissue of a specific EV. To identify the source tissue of
+ a specific EV, we have identified tissue-specific miRNA and mRNA
+ markers for multiple organs and tissues from existing RNAseq
+ transcriptomes using the tissue specificity index and trained a
+ multiclass support vector machine to classify the tissue of origin.
+ The accuracy of the classifier was verified using RNAseq
+ transcriptomes not in the training set. We show the applicability of
+ the classifier to simulated EVs by down sampling reads to $10^5$
+ reads and biasing the reads to account for preferential association
+ of RNA motifs with EV packaging machinery.
+
+* Concentration of RNA molecules in exosomes
+  + http://www.journalofextracellularvesicles.net/index.php/jev/article/view/24858#F0005_24858
+  + 10^8 particles
+  + 3x10^8 cells
+  + 328x10^8 particles
+  + 100 particles per cell, roughly.
+  + so 10^6 cell = 10^8 particles.
+  + between 100-1,500 nt
+  + 0.7-75ng of RNA per 10^6 cell
+  + 1^10^-24g per base
+  + 4e16 bases per 10^6 cell
+  + 4e8 bases per particle
+  + 4e5 molecules per cell.
+
