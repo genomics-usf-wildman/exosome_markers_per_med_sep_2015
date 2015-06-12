@@ -14,12 +14,16 @@
  specificity index and using machine learning techniques we trained a
  multiclass support vector machine to classify the tissue of origin.
  Our approach identified MIR1914, MIR126, SNORD12, and SNORD5 as being
- uterus specific, and members of the PSG family as being placenta
- specific. The accuracy of the classifier was verified using RNAseq
- transcriptome data not in the training set. We show the applicability
- of the classifier to simulated EVs by down sampling reads to $10^5$
- reads and biasing the reads to account for preferential association
- of RNA motifs with EV packaging machinery. This is an extra sentence.
+ uterus specific, and members of the CGB, LGALS13, and the PSG family
+ as being placenta specific. The accuracy of the classifier was
+ verified using RNAseq transcriptome data not in the training set. We
+ show the applicability of the classifier to simulated EVs by down
+ sampling reads to $10^5$ reads and biasing the reads to account for
+ preferential association of RNA motifs with EV packaging machinery.
+ When coupled with single-EV sequencing, our classifier enables
+ clinicians to monitor disease-specific markers over the course of
+ treatment without biopsies, increasing the ability of clinicians to
+ adapt treatment modalities to the individual patient.
 
 * Concentration of RNA molecules in exosomes
   + http://www.journalofextracellularvesicles.net/index.php/jev/article/view/24858#F0005_24858
