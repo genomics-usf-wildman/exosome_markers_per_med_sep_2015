@@ -11,7 +11,7 @@
  source tissue of a specific EV, we have identified tissue-specific
  miRNA and mRNA markers for multiple organs and tissues from existing
  publicly-available RNAseq transcriptomes by calculating a tissue
- specificity index and using machine learning techniques we trained a
+ specificity index. Using machine learning techniques we trained a
  multiclass support vector machine to classify the tissue of origin.
  Our approach identified MIR1914, MIR126, SNORD12, and SNORD5 as
  uterus specific. CGB, LGALS13, and members of the PSG family were
