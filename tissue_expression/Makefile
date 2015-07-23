@@ -25,3 +25,6 @@ chosen_samples: select_srx.R roadmap_epigenomics.tsv srx_to_sra.txt
 
 srx.mk: write_srx.R chosen_samples
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+make_srx_dirs: make_srx_dir.R chosen_samples
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^)
