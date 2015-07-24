@@ -9,7 +9,6 @@ SHELL=/bin/bash
 ### just echo what we're loading
 ifdef MODULEPATH
 MODULE=module
-R=module load R/3.2.0; R
 else
 MODULE=echo
 endif
