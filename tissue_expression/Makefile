@@ -64,3 +64,11 @@ $(BOWTIE_INDEX_DIR)$(FASTA).gz:
 $(BOWTIE_INDEX_DIR)$(GTF).gz:
 	mkdir -p $(BOWTIE_INDEX_DIR)
 	rsync -avP "rsync://ftp.ensembl.org/ensembl/pub/release-80/gtf/$(ALIGNMENT_SPECIES)/$(GTF).gz" $@
+
+
+get_srr: $(patsubst %,%-get_srr,$(SRX_FILES))
+
+$(patsubst %,%-get_srr,$(SRX_FILES)): %-get_srr: %
+	make -C $* get_srr
+
+.PHONY: get_srr
