@@ -54,8 +54,12 @@ get.nreads <- function(srx,srr.listing=NULL,db="sradb") {
             any(i==srr.listing[,SRX])
             ) {
             srr <- srr.listing[SRX==i,SRR][1]
-            nreads[i] <-
-                .nreads(srr)
+            if (is.na(srr.listing[,NREADS])) {
+                nreads[i] <-
+                    .nreads(srr)
+            } else {
+                nreads[i] <- srr.listing[SRX==i,NREADS][1]
+            }
         } else {
             library("RPostgreSQL")
             con <- dbConnect(PostgreSQL(),dbname="sradb")
@@ -79,7 +83,7 @@ setnames(roadmap.ep,names(roadmap.ep),
               gsub("[ _-]+","_",
                    gsub("[#]","",names(roadmap.ep)))))
 
-srx.to.sra <- NULL# fread(args[2],sep="\t")
+srx.to.sra <- fread(args[2],sep="\t")
 
 chosen.samples <-
     roadmap.ep[SRA_FTP!="" & Experiment=="mRNA-Seq",]
