@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 BOWTIE_OPTIONS?=
-BOWTIE_INDEX_DIR=../bowtie/
+BOWTIE_INDEX_DIR?=../ref_seqs/
 LOCAL_BOWTIE_OPTIONS?= -N 1 -L 15 -k 10 --local
 ALIGNMENT_SPECIES?=$(SPECIES)
 
