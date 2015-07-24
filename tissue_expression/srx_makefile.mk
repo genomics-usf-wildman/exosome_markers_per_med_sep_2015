@@ -2,7 +2,7 @@
 
 include ../common_variables.mk
 
-BOWTIE_INDEX_DIR=../
+BOWTIE_INDEX_DIR=../ref_seqs/
 COMMON_MAKEFILE=../common_makefile.mk
 
 include srx_info.mk
