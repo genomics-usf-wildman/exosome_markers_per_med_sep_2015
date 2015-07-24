@@ -8,11 +8,11 @@ COMMON_MAKEFILE=../common_makefile.mk
 include srx_info.mk
 
 ifeq ($(NREADS),1)
-FASTQ_FILES=$(patsubst %,%.fastq.gz,$(SRRS))
-TOPHAT_FASTQ_ARGUMENT=$(shell echo $(FASTQ)|sed 's/ */,/g')
+FASTQ_FILES:=$(patsubst %,%.fastq.gz,$(SRRS))
+TOPHAT_FASTQ_ARGUMENT:=$(shell echo $(FASTQ_FILES)|sed 's/ */,/g')
 else
-FASTQ_FILES=$(patsubst %,%-1.fastq.gz %-2.fastq.gz,$(SRRS))
-TOPHAT_FASTQ_ARGUMENT=$(shell echo $(FASTQ)|grep -e '-1'|sed 's/ */,/g') $(shell echo $(FASTQ)|grep -e '-2'|sed 's/ */,/g')
+FASTQ_FILES:=$(patsubst %,%-1.fastq.gz,$(SRRS))  $(patsubst %,%-2.fastq.gz,$(SRRS))
+TOPHAT_FASTQ_ARGUMENT:=$(shell echo $(patsubst %,%-1.fastq.gz,$(SRRS))|sed 's/ */,/g') $(shell echo $(patsubst %,%-2.fastq.gz,$(SRRS))|sed 's/ */,/g') 
 endif
 
 SRR_FILES=$(patsubst %,%.sra,$(SRRS))
@@ -27,7 +27,7 @@ make_fastq: $(FASTQ_FILES)
 ifeq ($(NREADS),1)
 $(FASTQ_FILES): %.gz: %.sra
 else
-$(FASTQ_FILES): %-1.fastq.gz %-2.fastq.gz: %.sra
+%-1.fastq.gz %-2.fastq.gz: %.sra
 endif
 	$(MODULE) load sratoolkit/2.3.5-2; \
 	fastq-dump --gzip $^;
