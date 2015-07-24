@@ -1,5 +1,6 @@
 #!/usr/bin/make -f
 
+include common_variables.mk
 include ../mk/variables.mk
 
 ## this file contains all of the SRX and the SRRs in that SRX
@@ -28,3 +29,35 @@ srx.mk: write_srx.R chosen_samples
 
 make_srx_dirs: make_srx_dir.R chosen_samples
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^)
+
+BOWTIE_INDEX_DIR=ref_seqs/
+
+bowtie_indexes: $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2
+
+$(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2: $(BOWTIE_INDEX_DIR)$(FASTA)
+	$(MODULE) load bowtie2/2.1.0; \
+	bowtie2-build $< $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2
+
+$(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.fa: $(FASTA)
+	rm -f $@
+	ln $< $@
+
+$(BOWTIE_INDEX_DIR)$(FASTA): $(BOWTIE_INDEX_DIR)$(FASTA).gz
+	gzip -dc $< > $@
+
+$(BOWTIE_INDEX_DIR)$(GTF): $(BOWTIE_INDEX_DIR)$(GTF).gz
+	gzip -dc $< > $@
+
+remote_files: $(BOWTIE_INDEX_DIR)$(FASTA).gz $(BOWTIE_INDEX_DIR)$(GTF).gz
+
+fasta: $(BOWTIE_INDEX_DIR)$(FASTA)
+
+gtf: $(BOWTIE_INDEX_DIR)$(GTF)
+
+$(BOWTIE_INDEX_DIR)$(FASTA).gz:
+	mkdir -p $(BOWTIE_INDEX_DIR)
+	rsync -avP "rsync://ftp.ensembl.org/ensembl/pub/release-80/fasta/$(ALIGNMENT_SPECIES)/dna/$(FASTA).gz" $@
+
+$(BOWTIE_INDEX_DIR)$(GTF).gz:
+	mkdir -p $(BOWTIE_INDEX_DIR)
+	rsync -avP "rsync://ftp.ensembl.org/ensembl/pub/release-80/gtf/$(ALIGNMENT_SPECIES)/$(GTF).gz" $@
