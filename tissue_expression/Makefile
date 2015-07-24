@@ -22,12 +22,15 @@ gse_family.mk: human_sequencing_studies.org
 		> $@
 
 chosen_samples: select_srx.R roadmap_epigenomics.tsv srx_to_sra.txt
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 srx.mk: write_srx.R chosen_samples
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 make_srx_dirs: make_srx_dir.R chosen_samples
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^)
 
 BOWTIE_INDEX_DIR=ref_seqs/
