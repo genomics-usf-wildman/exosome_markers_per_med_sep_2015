@@ -35,7 +35,7 @@ make_srx_dirs: make_srx_dir.R chosen_samples
 
 BOWTIE_INDEX_DIR=ref_seqs/
 
-bowtie_indexes: $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2
+bowtie_indexes: $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2 $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.fa
 
 $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2: $(BOWTIE_INDEX_DIR)$(FASTA)
 	$(MODULE) load bowtie2/2.1.0; \
