@@ -9,10 +9,10 @@ include srx_info.mk
 
 ifeq ($(NREADS),1)
 FASTQ_FILES:=$(patsubst %,%.fastq.gz,$(SRRS))
-TOPHAT_FASTQ_ARGUMENT:=$(shell echo $(FASTQ_FILES)|sed 's/\ */,/g')
+TOPHAT_FASTQ_ARGUMENT:=$(shell echo $(FASTQ_FILES)|sed 's/  */,/g')
 else
 FASTQ_FILES:=$(patsubst %,%-1.fastq.gz,$(SRRS))  $(patsubst %,%-2.fastq.gz,$(SRRS))
-TOPHAT_FASTQ_ARGUMENT:=$(shell echo $(patsubst %,%-1.fastq.gz,$(SRRS))|sed 's/\ */,/g') $(shell echo $(patsubst %,%-2.fastq.gz,$(SRRS))|sed 's/ */,/g')
+TOPHAT_FASTQ_ARGUMENT:=$(shell echo $(patsubst %,%-1.fastq.gz,$(SRRS))|sed 's/  */,/g') $(shell echo $(patsubst %,%-2.fastq.gz,$(SRRS))|sed 's/  */,/g')
 endif
 
 SRR_FILES=$(patsubst %,%.sra,$(SRRS))
