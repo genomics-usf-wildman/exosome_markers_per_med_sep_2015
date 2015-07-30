@@ -40,7 +40,7 @@ star_indexes:
 	$(MODULE) load STAR/2.4.2a; \
 	mkdir -p $(STAR_INDEX_DIR); \
 	STAR --genomeFastaFiles $(BOWTIE_INDEX_DIR)$(FASTA) \
-		--runThreadsN $(CORES) \
+		--runThreadN $(CORES) \
 		--genomeDir $(STAR_INDEX_DIR)
 
 bowtie_indexes: $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2 $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.fa
