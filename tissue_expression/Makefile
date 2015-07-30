@@ -40,6 +40,7 @@ star_indexes:
 	$(MODULE) load STAR/2.4.2a; \
 	mkdir -p $(STAR_INDEX_DIR); \
 	STAR --genomeFastaFiles $(BOWTIE_INDEX_DIR)$(FASTA) \
+		--runMode genomeGenerate \
 		--runThreadN $(CORES) \
 		--genomeDir $(STAR_INDEX_DIR)
 
