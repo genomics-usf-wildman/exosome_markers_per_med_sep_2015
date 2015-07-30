@@ -35,6 +35,14 @@ make_srx_dirs: make_srx_dir.R chosen_samples
 
 BOWTIE_INDEX_DIR=ref_seqs/
 
+STAR_INDEX_DIR=$(BOWTIE_INDEX_DIR)/star/
+star_indexes:
+	$(MODULE) load STAR/2.4.2a; \
+	mkdir -p $(STAR_INDEX_DIR); \
+	star --genomeFastaFiles $(BOWTIE_INDEX_DIR)$(FASTA) \
+		--runThreadsN $(CORES) \
+		--genomeDir $(STAR_INDEX_DIR)
+
 bowtie_indexes: $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2 $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.fa
 
 $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2: $(BOWTIE_INDEX_DIR)$(FASTA)

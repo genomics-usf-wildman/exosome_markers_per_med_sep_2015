@@ -2,6 +2,7 @@
 
 BOWTIE_OPTIONS?=
 BOWTIE_INDEX_DIR?=../ref_seqs/
+STAR_INDEX_DIR?=$(BOWTIE_INDEX_DIR)
 LOCAL_BOWTIE_OPTIONS?= -N 1 -L 15 -k 10 --local
 ALIGNMENT_SPECIES?=$(SPECIES)
 
@@ -19,6 +20,17 @@ $(SRX)_genes.fpkm_tracking: $(SRX)_tophat.bam $(BOWTIE_INDEX_DIR)$(GTF)
 	done;
 
 alignment: $(SRX)_tophat.bam
+
+$(SRX)_star.bam:
+	$(MODULE) load STAR/2.4.2a; \
+	mkdir -p $(SRX)_star; \
+	STAR --outFileNamePrevix $(SRX)_star/ \
+		--outSAMtype BAM SortedByCoordinate \
+		--runThreadN $(CORES) \
+        --outSAMstrandField intronMotif \
+		--genomeDir $(STAR_INDEX_DIR) \
+		--readFilesCommand "gzip -c" \
+		--readFilesIn $(FASTQ_FILES)
 
 $(SRX)_tophat.bam: \
 	$(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2 \
