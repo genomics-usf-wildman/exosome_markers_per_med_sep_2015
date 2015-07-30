@@ -39,7 +39,7 @@ STAR_INDEX_DIR=$(BOWTIE_INDEX_DIR)/star/
 star_indexes:
 	$(MODULE) load STAR/2.4.2a; \
 	mkdir -p $(STAR_INDEX_DIR); \
-	star --genomeFastaFiles $(BOWTIE_INDEX_DIR)$(FASTA) \
+	STAR --genomeFastaFiles $(BOWTIE_INDEX_DIR)$(FASTA) \
 		--runThreadsN $(CORES) \
 		--genomeDir $(STAR_INDEX_DIR)
 
