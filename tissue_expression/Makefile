@@ -41,6 +41,7 @@ star_indexes:
 	mkdir -p $(STAR_INDEX_DIR); \
 	STAR --genomeFastaFiles $(BOWTIE_INDEX_DIR)$(FASTA) \
 		--runMode genomeGenerate \
+		--limitGenomeGenerateRam 128849018880 \
 		--runThreadN $(CORES) \
 		--genomeDir $(STAR_INDEX_DIR)
 
