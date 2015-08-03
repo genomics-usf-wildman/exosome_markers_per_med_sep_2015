@@ -24,7 +24,7 @@ alignment: $(SRX)_star.bam
 $(SRX)_star.bam:
 	$(MODULE) load STAR/2.4.2a; \
 	mkdir -p $(SRX)_star; \
-	STAR --outFileNamePrevix $(SRX)_star/ \
+	STAR --outFileNamePrefix $(SRX)_star/ \
 		--outSAMtype BAM SortedByCoordinate \
 		--runThreadN $(CORES) \
         --outSAMstrandField intronMotif \
