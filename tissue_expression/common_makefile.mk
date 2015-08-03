@@ -12,14 +12,14 @@ comma=,
 
 call: $(SRX)_genes.fpkm_tracking
 
-$(SRX)_genes.fpkm_tracking: $(SRX)_tophat.bam $(BOWTIE_INDEX_DIR)$(GTF)
+$(SRX)_genes.fpkm_tracking: $(SRX)_star.bam $(BOWTIE_INDEX_DIR)$(GTF)
 	$(MODULE) load cufflinks/2.2.1; \
 	cufflinks -p $(CORES) -G $(wordlist 2,2,$^) $<
 	for file in genes.fpkm_tracking isoforms.fpkm_tracking skipped.gtf transcripts.gtf; do \
 		mv $${file} $(SRX)_$${file}; \
 	done;
 
-alignment: $(SRX)_tophat.bam
+alignment: $(SRX)_star.bam
 
 $(SRX)_star.bam:
 	$(MODULE) load STAR/2.4.2a; \
