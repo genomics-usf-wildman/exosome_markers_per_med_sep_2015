@@ -29,7 +29,7 @@ $(SRX)_star.bam:
 		--runThreadN $(CORES) \
         --outSAMstrandField intronMotif \
 		--genomeDir $(STAR_INDEX_DIR) \
-		--readFilesCommand "gzip -c" \
+		--readFilesCommand "gzip -dc" \
 		--readFilesIn $(TOPHAT_FASTQ_ARGUMENT)
 
 $(SRX)_tophat.bam: \
