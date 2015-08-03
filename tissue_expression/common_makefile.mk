@@ -30,7 +30,7 @@ $(SRX)_star.bam:
         --outSAMstrandField intronMotif \
 		--genomeDir $(STAR_INDEX_DIR) \
 		--readFilesCommand "gzip -c" \
-		--readFilesIn $(FASTQ_FILES)
+		--readFilesIn $(TOPHAT_FASTQ_ARGUMENT)
 
 $(SRX)_tophat.bam: \
 	$(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2 \
