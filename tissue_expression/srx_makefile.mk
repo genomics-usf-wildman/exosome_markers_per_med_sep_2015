@@ -25,7 +25,7 @@ $(SRR_FILES): %.sra:
 make_fastq: $(FASTQ_FILES)
 
 ifeq ($(NREADS),1)
-$(FASTQ_FILES): %.gz: %.sra
+$(FASTQ_FILES): %.fastq.gz: %.sra
 else
 %_1.fastq.gz %_2.fastq.gz: %.sra
 endif
