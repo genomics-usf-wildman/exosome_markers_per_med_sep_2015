@@ -30,7 +30,7 @@ else
 %_1.fastq.gz %_2.fastq.gz: %.sra
 endif
 	$(MODULE) load sratoolkit/2.3.5-2; \
-	fastq-dump --split-3 --gzip $^;
+	fastq-dump -B --split-3 --gzip $^;
 
 
 include $(COMMON_MAKEFILE)
