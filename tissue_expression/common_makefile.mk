@@ -21,7 +21,7 @@ $(SRX)_genes.fpkm_tracking: $(SRX)_star.bam $(BOWTIE_INDEX_DIR)$(GTF)
 
 alignment: $(SRX)_star.bam
 
-$(SRX)_star.bam:
+$(SRX)_star.bam: $(FASTQ_FILES)
 	$(MODULE) load STAR/2.4.2a; \
 	mkdir -p $(SRX)_star; \
 	STAR --outFileNamePrefix $(SRX)_star/ \
