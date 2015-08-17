@@ -16,12 +16,16 @@ human_sequencing_studies.org: yaml_to_org.pl human_sequencing_studies.yaml
 	perl $< --include accession --include samples --include description \
 		$(wordlist 2,2,$^) > $@
 
-gse_family.mk: human_sequencing_studies.org
-	grep ' yes ' $< |awk -F' | ' '{print $$2}'| \
-		perl -pe 'BEGIN{print "GSE_FAMILIES="}; s/\n/ /g;'|sed 's/ $$//' \
-		> $@
+# we are currently not selecting the GSE samples this way; we might
+# eventually do this later.
 
-chosen_samples: select_srx.R roadmap_epigenomics.tsv srx_to_sra.txt
+# gse_family.mk: human_sequencing_studies.org
+# 	grep ' yes ' $< |awk -F' | ' '{print $$2}'| \
+# 		perl -pe 'BEGIN{print "GSE_FAMILIES="}; s/\n/ /g;'|sed 's/ $$//' \
+# 		> $@
+
+chosen_samples: select_srx.R roadmap_epigenomics.tsv srx_to_sra.txt \
+	gse_family_xml/gse_samples
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 

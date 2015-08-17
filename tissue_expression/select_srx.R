@@ -1,5 +1,5 @@
 library(data.table)
-args <- c("roadmap_epigenomics.tsv","srx_to_sra.txt")
+args <- c("roadmap_epigenomics.tsv","srx_to_sra.txt","gse_family_xml/gse_samples")
 
 args <- commandArgs(trailingOnly=TRUE)
 
@@ -85,11 +85,22 @@ setnames(roadmap.ep,names(roadmap.ep),
 
 srx.to.sra <- fread(args[2],sep="\t")
 
+load(args[3])
+setnames(gse.samples,
+         c("accession","sra","title","characteristics"),
+         c("GEO_Accession","SRA_FTP","Sample_Name","Experiment"))
+
 chosen.samples <-
-    roadmap.ep[SRA_FTP!="" & Experiment=="mRNA-Seq",]
-chosen.samples[,SRX:=gsub(".+/(SRX\\d+)$","\\1",SRA_FTP)]
+    rbind(roadmap.ep[SRA_FTP!="" & Experiment=="mRNA-Seq",],
+          gse.samples,
+          fill=TRUE)
+
+
+chosen.samples[,SRX:=gsub("(?:^|.+/)(SRX\\d+)$","\\1",SRA_FTP)]
 chosen.samples[,SRR:=get.srrs(SRX,srx.to.sra)]
 chosen.samples[,NREADS:=get.nreads(SRX,srx.to.sra)]
+
+## add 
 
 ### only write this out if we updated the data; someone might not have
 ### a database who wants to regenerate this file

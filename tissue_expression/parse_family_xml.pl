@@ -21,11 +21,12 @@ my @samples = $dom->firstChild->getChildrenByLocalName('Sample');
 sub fixup_text{
     my ($text) = @_;
     $text =~ s/[\t\n\s]/ /g;
+    $text =~ s/(^\s+|\s+$)//g;
     return($text);
 }
 binmode(STDOUT,':utf8');
 
-print "title\taccession\tgrowth\tsra\n";
+print "title\taccession\tgrowth\tsra\tcharacteristics\n";
 for my $sample (@samples) {
     # print $sample->nodeName()."\n";
     for (qw(Title Accession Growth-Protocol)) {
@@ -36,15 +37,24 @@ for my $sample (@samples) {
             print fixup_text($t[0]->textContent())."\t";
         }
     }
-    my @t = $sample->findnodes(".//*[local-name()='Supplementary-Data']");
+    my @c;
+    my @t = $sample->findnodes(".//*[local-name()='Supplementary-Data']"),
+             ;
     for my $t (@t) {
         # p $t;
         if (0 < scalar grep {$_->nodeName eq 'type' and
                                  $_->value eq 'SRA Experiment'}
             $t->attributes()) {
-            print fixup_text($t->textContent());
+            push @c, fixup_text($t->textContent());
         }
     }
+    print join(' ',@c)."\t";
+    @c = ();
+    @t = $sample->findnodes(".//*[local-name()='Characteristics']");
+    for my $t (@t) {
+        push @c,fixup_text($t->textContent());
+    }
+    print join(' ',@c);
     print "\n";
 }
 
