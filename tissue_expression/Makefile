@@ -6,6 +6,11 @@ include ../mk/variables.mk
 ## this file contains all of the SRX and the SRRs in that SRX
 include srx.mk
 
+## this file contains a variable that describes how to connect to the
+## cluster host where I ran the analyses and will retreive them onto
+## the local host for analysis
+-include cluster_host.mk
+
 roadmap_epigenomics.tsv:
 	wget -O $@ "http://www.ncbi.nlm.nih.gov/geo/roadmap/epigenomics/?view=samples;format=tsv"
 
@@ -79,6 +84,15 @@ $(BOWTIE_INDEX_DIR)$(GTF).gz:
 	mkdir -p $(BOWTIE_INDEX_DIR)
 	rsync -avP "rsync://ftp.ensembl.org/ensembl/pub/release-80/gtf/$(ALIGNMENT_SPECIES)/$(GTF).gz" $@
 
+
+get_results:
+	rsync -avmP \
+		--include '**_genes.fpkm_tracking' \
+		--include '**_isoforms.fpkm_tracking' \
+		--include '**Log.final.out' \
+        --include '**/' \
+	    --exclude '**' \
+		$(CLUSTER_HOST)/tissue_expression/ .;
 
 get_srr: $(patsubst %,%-get_srr,$(SRX_FILES))
 
