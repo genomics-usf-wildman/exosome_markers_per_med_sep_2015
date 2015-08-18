@@ -5,3 +5,4 @@ human_sequencing_studies.yaml
 human_sequencing_studies.txt
 SRX*
 ref_seqs
+cluster_host.mk
