@@ -42,6 +42,15 @@ make_srx_dirs: make_srx_dir.R chosen_samples
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^)
 
+
+ISOFORM_FPKMS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_isoforms.fpkm_tracking)
+GENE_FPKMS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_genes.fpkm_tracking)
+STAR_LOGS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_star/Log.out.final)
+combined_read_counts: combine_fpkms.R $(ISOFORM_FPKMS) $(GENE_FPKMS) $(STAR_LOGS)
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+
 BOWTIE_INDEX_DIR=ref_seqs/
 
 STAR_INDEX_DIR=$(BOWTIE_INDEX_DIR)/star/
