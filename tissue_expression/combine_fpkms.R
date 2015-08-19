@@ -14,12 +14,12 @@ args <- args[-length(args)]
 ### these are the isoform fpkm files
 isoform.files <- grep("_isoforms.fpkm_tracking",args,value=TRUE)
 ### these are the gene FPKM files
-genes.files <- grep("_genes.fpkm_tracking",args,value=TRUE)
+gene.files <- grep("_genes.fpkm_tracking",args,value=TRUE)
 ### these files contain the alignment results from STAR
 star.log.files <- grep("_star/Log.final.out",args,value=TRUE)
 
 if (!all.equal(length(isoform.files),
-               length(genes.files),
+               length(gene.files),
                length(star.log.files))) {
     stop("the number of isoform files, gene files, and star log files must be equal")
 }
@@ -35,22 +35,27 @@ if (!all.equal(sort(.get.srx(isoform.files)),
 }
 
 
-pb <- txtPRogressBar(min=1,max=length(isoform.counts)*3)
+pb <- txtProgressBar(min=1,max=length(isoform.files)*3,style=3)
+i <- 0
 
 isoform.counts <- list()
 for (file in isoform.files) {
     srx.accession <- .get.srx(file)
-    isoform.counts[[srx.acession]] <-
+    isoform.counts[[srx.accession]] <-
         fread(file)
-    isoform.counts[[srx.acession]][,srx:=srx.accession]
+    isoform.counts[[srx.accession]][,srx:=srx.accession]
+    i <- i + 1
+    setTxtProgressBar(pb,i)
 }
 
 gene.counts <- list()
 for (file in gene.files) {
     srx.accession <- .get.srx(file)
-    gene.counts[[srx.acession]] <-
+    gene.counts[[srx.accession]] <-
         fread(file)
-    gene.counts[[srx.acession]][,srx:=srx.accession]
+    gene.counts[[srx.accession]][,srx:=srx.accession]
+    i <- i + 1
+    setTxtProgressBar(pb,i)
 }
 
 star.logs <- list()
@@ -62,8 +67,16 @@ for (file in star.log.files) {
     star.log$field <- gsub("^\\s+","",star.log$field)
     star.log$srx <- srx.accession
     star.logs[[srx.accession]] <- data.table(star.log)[!grepl(":",field),]
+    i <- i + 1
+    setTxtProgressBar(pb,i)
 }
+close(pb)
 
 gene.counts <- rbindlist(gene.counts)
 isoform.counts <- rbindlist(isoform.counts)
 star.logs <- rbindlist(star.logs)
+
+save(file=results.file,
+     gene.counts,
+     isoform.counts,
+     star.logs)
