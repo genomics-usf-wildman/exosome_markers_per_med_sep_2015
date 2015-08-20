@@ -6,3 +6,4 @@ human_sequencing_studies.txt
 SRX*
 ref_seqs
 cluster_host.mk
+combined_read_counts
