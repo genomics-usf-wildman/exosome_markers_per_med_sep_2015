@@ -1,0 +1,91 @@
+\documentclass[a0paper,landscape]{tikzposter}
+\usepackage{fontspec}
+\setmainfont{FreeSerif}
+\setsansfont{FreeSans}
+\setmonofont{FreeMono}
+\usepackage{url}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage[bf]{caption}
+\usepackage{rotating}
+\usepackage{wrapfig}
+\usepackage{fancybox}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{acronym}
+\usepackage[backend=biber,natbib=true,hyperref=true,style=numeric-comp]{biblatex}
+\addbibresource{references.bib}
+\usepackage[nomargin,inline,draft]{fixme}
+\newcommand{\DLA}[1]{\textcolor{red}{\fxnote{DLA: #1}}}
+\usepackage[hyperfigures,bookmarks,colorlinks,citecolor=black,filecolor=black,linkcolor=black,urlcolor=black]{hyperref}
+\usepackage{texshade}
+\usepackage{tikz}
+\usepackage{nameref}
+\usepackage{zref-xr,zref-user}
+
+% The textpos package is necessary to position textblocks at arbitary 
+% places on the page.  Use showboxes option to show outlines of textboxes.
+% \usepackage[absolute]{textpos}
+\usepackage[absolute,showboxes]{textpos}
+
+\usepackage{multirow}
+\usepackage{array}
+
+\title{Identifying the Tissue of Origin of Extracellular Vesicles Using RNA Expression Signatures}
+\author{Don L. Armstrong, Monica Uddin, Derek Wildman}
+\usetheme{Basic}
+
+\begin{document}
+
+<<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
+opts_chunk$set(dev="cairo_pdf",out.width="\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
+#opts_chunk$set(cache=TRUE, autodep=TRUE)
+options(device = function(file, width = 8, height = 7, ...) {
+  cairo_pdf(tempfile(), width = width, height = height, ...)
+})
+library("data.table")
+library("ggplot2")
+library("reshape2")
+library("proto")
+@ 
+
+
+\maketitle
+
+\begin{columns}
+
+  \column{0.3}
+
+  \block{Abstract}{ Extracellular vesicles (EVs) are small (40-1000nm)
+    compartments that can be found in blood, saliva, and urine. EVs
+    originate from the plasma membrane or multivesicular endosome of
+    many cell types and contain proteins, lipids, mRNA, miRNA, and
+    many other non-coding RNAs. Because EVs contain mRNA from the cell
+    of origin and can be obtained without invasive procedures, they
+    are a promising remote sensor of the transcriptome of tissues
+    which would otherwise be inaccessible. One requirement for
+    remotely sensing the transcriptome is identifying the source
+    tissue of a specific EV. To identify the source tissue of a
+    specific EV, we have identified tissue-specific miRNA and mRNA
+    markers for multiple organs and tissues from existing
+    publicly-available RNAseq transcriptomes by calculating a tissue
+    specificity index. Using machine learning techniques we trained a
+    multiclass support vector machine to classify the tissue of
+    origin. Our approach identified MIR1914, MIR126, SNORD12, and
+    SNORD5 as uterus specific. CGB, LGALS13, and members of the PSG
+    family were identified as placenta specific. The accuracy of the
+    classifier was verified using RNAseq transcriptome data not in the
+    training set. We show the applicability of the classifier to
+    simulated EVs by down sampling reads to $10^5$ reads and biasing
+    the reads to account for preferential association of RNA motifs
+    with EV packaging machinery. When coupled with single-EV
+    sequencing, our classifier enables clinicians to monitor
+    disease-specific markers over the course of treatment without
+    biopsies, increasing the ability of clinicians to adapt treatment
+    modalities to the individual patient. }
+  
+  \block{Methods}{ Nothing here yet. }
+  
+\end{columns}
+
+\end{document}
