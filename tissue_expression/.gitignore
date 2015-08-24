@@ -7,3 +7,6 @@ SRX*
 ref_seqs
 cluster_host.mk
 combined_read_counts
+GTEx_Analysis_V4_RNA-seq_Flux1.6_transcript_rpkm.txt.gz
+GTEx_Analysis_V4_RNA-seq_RNA-SeQCv1.1.8_gene_rpkm.gct.gz
+GTEx_Data_V4_Annotations_SampleAttributesDS.txt
