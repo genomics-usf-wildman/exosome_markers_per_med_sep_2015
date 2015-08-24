@@ -18,11 +18,11 @@ setkey(isoform.counts,"SRX")
 
 ### combine sample name and srx into the gene counts file
 combined.gene.reads <-
-    categorized.samples[,list(Sample_Group,SRX,GEO_Accession)][gene.counts]
+    categorized.samples[,list(Sample_Group,SRX)][gene.counts]
 
 ### do the same for the isoforms
 combined.isoform.reads <-
-    categorized.samples[,list(Sample_Group,SRX,GEO_Accession)][isoform.counts]
+    categorized.samples[,list(Sample_Group,SRX)][isoform.counts]
 
 .narm.mean <- function(x){
     mean(x,na.rm=TRUE)
@@ -51,13 +51,13 @@ tissue.specificity.index <- function(expression){
 ##' Identifies genes or isoforms which are specific to certain tissue.
 ##' @title specific.genes.isoforms
 ##' @param data -- wide table of data
-##' @param min.specificity -- minimum specificity score, defaults to 0.99
+##' @param min.specificity -- minimum specificity score, defaults to 0.98
 ##' @param min.max.expression -- minimum max expression, defaults to 10
 ##' @return vector of length equal to rows of data which contains the
 ##' specific tissue that this isoform/gene describes, or NA if it does
 ##' not describe a specific tissue
 ##' @author Don Armstrong
-specific.genes.isoforms <- function(data,min.specificity=0.99,min.max.expression=10) {
+specific.genes.isoforms <- function(data,min.specificity=0.98,min.max.expression=10) {
     ## calculate the specificity index
     specificity <-
         apply(data[,-1],1,tissue.specificity.index)
@@ -86,7 +86,15 @@ tissue.specific.genes <- specific.genes.isoforms(c.gene.reads.wide)
 tissue.specific.isoforms <- specific.genes.isoforms(c.isoform.reads.wide)
 
 
+gene.reads.tissue <-
+    c.gene.reads.wide[!is.na(tissue.specific.genes$tissue),]
+
+isoform.reads.tissue <-
+    c.isoform.reads.wide[!is.na(tissue.specific.isoforms$tissue),]
+
 save(tissue.specific.genes,
      tissue.specific.isoforms,
+     isoform.reads.tissue,
+     gene.reads.tissue,
      file=args[length(args)])
 
