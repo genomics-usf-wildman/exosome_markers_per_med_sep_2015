@@ -21,6 +21,18 @@ human_sequencing_studies.org: yaml_to_org.pl human_sequencing_studies.yaml
 	perl $< --include accession --include samples --include description \
 		$(wordlist 2,2,$^) > $@
 
+GTEx_Analysis_V4_RNA-seq_RNA-SeQCv1.1.8_gene_rpkm.gct.gz:
+	wget -O $@ "http://www.gtexportal.org/static/datasets/gtex_analysis_v4/rna_seq_data/$@" || \
+		rm $@
+
+GTEx_Analysis_V4_RNA-seq_Flux1.6_transcript_rpkm.txt.gz:
+	wget -O $@ "http://www.gtexportal.org/static/datasets/gtex_analysis_v4/rna_seq_data/$@" || \
+		rm $@
+
+GTEx_Data_V4_Annotations_SampleAttributesDS.txt:
+	wget -O $@ "http://www.gtexportal.org/static/datasets/gtex_analysis_v4/annotations/$@" || \
+		rm $@
+
 # we are currently not selecting the GSE samples this way; we might
 # eventually do this later.
 
@@ -46,7 +58,8 @@ make_srx_dirs: make_srx_dir.R chosen_samples
 ISOFORM_FPKMS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_isoforms.fpkm_tracking)
 GENE_FPKMS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_genes.fpkm_tracking)
 STAR_LOGS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_star/Log.final.out)
-combined_read_counts: combine_fpkms.R $(ISOFORM_FPKMS) $(GENE_FPKMS) $(STAR_LOGS)
+combined_read_counts: combine_fpkms.R $(ISOFORM_FPKMS) $(GENE_FPKMS) $(STAR_LOGS) \
+	GTEx_Analysis_V4_RNA-seq_RNA-SeQCv1.1.8_gene_rpkm.gct.gz
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 

@@ -1,3 +1,4 @@
+library(reshape2)
 library(data.table)
 ### set up args for debugging purposes
 args <- c("SRX007167/SRX007167_isoforms.fpkm_tracking",
@@ -17,6 +18,8 @@ isoform.files <- grep("_isoforms.fpkm_tracking",args,value=TRUE)
 gene.files <- grep("_genes.fpkm_tracking",args,value=TRUE)
 ### these files contain the alignment results from STAR
 star.log.files <- grep("_star/Log.final.out",args,value=TRUE)
+
+gtex.file <- grep("GTEx_Analysis",args,value=TRUE)
 
 if (!all.equal(length(isoform.files),
                length(gene.files),
@@ -72,7 +75,19 @@ for (file in star.log.files) {
 }
 close(pb)
 
-gene.counts <- rbindlist(gene.counts)
+### deal with gtex data
+gtex.counts <- fread(paste0("zcat ",gtex.file),skip="Name")
+
+gtex.counts[,Name:=gsub("\\.\\d+","",Name)]
+setnames(gtex.counts,c("Name","Description"),c("gene_id","gene_short_name"))
+gtex.counts <-
+    melt(gtex.counts,
+         id.vars=c("gene_id","gene_short_name"),
+         value.name="FPKM",
+         variable.name="srx")
+gene.counts[["gtex"]] <- gtex.counts
+
+gene.counts <- rbindlist(gene.counts,fill=TRUE)
 isoform.counts <- rbindlist(isoform.counts)
 star.logs <- rbindlist(star.logs)
 
