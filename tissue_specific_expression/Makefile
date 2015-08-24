@@ -19,8 +19,18 @@ chosen_samples:
 		wget -O $@ "http://some-place-to-be-determined/chosen_samples"; \
     fi;
 
+GTEx_Data_V4_Annotations_SampleAttributesDS.txt:
+	if [ -e ../tissue_expression/$@ ]; then \
+		ln -s ../tissue_expression/$@ $@; \
+    else \
+		wget -O $@ "http://www.gtexportal.org/static/datasets/gtex_analysis_v4/annotations/$@" || \
+			rm $@; \
+	fi;
 
-categorized_samples: R/categorize_samples.R chosen_samples
+
+
+categorized_samples: R/categorize_samples.R chosen_samples \
+	GTEx_Data_V4_Annotations_SampleAttributesDS.txt
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 tissue_specific_markers: R/tissue_specific_expression.R categorized_samples \
