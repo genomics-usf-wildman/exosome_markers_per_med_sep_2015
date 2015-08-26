@@ -36,3 +36,11 @@ categorized_samples: R/categorize_samples.R chosen_samples \
 tissue_specific_markers: R/tissue_specific_expression.R categorized_samples \
 	combined_read_counts
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+
+interesting_gene_reads interesting_isoform_reads: R/subset_reads.R categorized_samples \
+	combined_read_counts
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) \
+		interesting_gene_reads \
+		interesting_isoform_reads
+
