@@ -47,8 +47,13 @@ library("data.table")
 library("ggplot2")
 library("reshape2")
 library("proto")
+library("xtable")
 @ 
 
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum("../tissue_specific_expression/tissue_specific_markers")>>=
+load("../tissue_specific_expression/tissue_specific_markers")
+tissue.specific.genes <- data.table(tissue.specific.genes)
+@ 
 
 \maketitle
 
@@ -85,6 +90,36 @@ library("proto")
     modalities to the individual patient. }
   
   \block{Methods}{ Nothing here yet. }
+
+  \block{Uterus Specific Genes}{
+
+<<uterus.specific.markers.table,results="asis",echo=FALSE>>=
+temp <- tissue.specific.genes[tissue=="uterus",list(gene,specificity)]
+setnames(temp,c("Gene","Tissue Specificity"))
+print(xtable(temp,
+             caption="Uterus specific genes",label="tab:uterus_specific_genes"),
+      floating=FALSE,
+      include.rownames=FALSE,
+      )
+rm(temp)
+@ 
+}
+
+\column{0.3}
+  \block{Placenta Specific Genes}{
+
+<<placenta.specific.markers.table,results="asis",echo=FALSE>>=
+temp <- tissue.specific.genes[tissue=="placenta" & gi.max > 100,list(gene,specificity)]
+setnames(temp,c("Gene","Tissue Specificity"))
+print(xtable(temp,
+             caption="Placenta specific genes",label="tab:placenta_specific_genes"),
+      floating=FALSE,
+      include.rownames=FALSE,
+      )
+rm(temp)
+@ 
+}
+
   
 \end{columns}
 
