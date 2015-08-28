@@ -1,8 +1,8 @@
 library(data.table)
 library(reshape2)
 
-args <- c("categorized_samples",
-          "combined_read_counts",
+args <- c("interesting_gene_reads",
+          "interesting_isoform_reads",
           "tissue_specific_markers")
 
 args <- commandArgs(trailingOnly=TRUE)
@@ -10,42 +10,38 @@ args <- commandArgs(trailingOnly=TRUE)
 load(args[1])
 load(args[2])
 
-setkey(categorized.samples,"SRX")
-setnames(gene.counts,"srx","SRX")
-setkey(gene.counts,"SRX")
-setnames(isoform.counts,"srx","SRX")
-setkey(isoform.counts,"SRX")
-
 ### combine sample name and srx into the gene counts file
-combined.gene.reads <-
-    categorized.samples[,list(Sample_Group,SRX)][gene.counts]
-
-### do the same for the isoforms
-combined.isoform.reads <-
-    categorized.samples[,list(Sample_Group,SRX)][isoform.counts]
-
 .narm.mean <- function(x){
-    mean(x,na.rm=TRUE)
+    if(length(x)==0) {return(0)} else {return(mean(x,na.rm=TRUE))}
 }
 
 c.gene.reads.wide <-
-    dcast(combined.gene.reads,
+    dcast(interesting.gene.reads,
           gene_short_name~Sample_Group,
           fun.aggregate=.narm.mean,
           value.var="FPKM"
           )
 
 c.isoform.reads.wide <-
-    dcast(combined.isoform.reads,
+    dcast(interesting.isoform.reads,
           tracking_id~Sample_Group,
           fun.aggregate=.narm.mean,
           value.var="FPKM")
 
 ## this is the Tissue Specificity Index (eq 1) from Yanai et al.
 tissue.specificity.index <- function(expression){
+    expression <- expression[!is.na(expression)]
+    expression <- expression[is.finite(expression)]
+    if (length(expression)==0) {
+        return(0)
+    }
+    if (max(expression)==0) {
+        return(0)
+    }
     return(sum(1-expression/max(expression))/
                (length(expression)-1))
 }
+
 ##' Calculate genes or isoforms which are specific to a tissue
 ##'
 ##' Identifies genes or isoforms which are specific to certain tissue.
@@ -85,16 +81,7 @@ specific.genes.isoforms <- function(data,min.specificity=0.98,min.max.expression
 tissue.specific.genes <- specific.genes.isoforms(c.gene.reads.wide)
 tissue.specific.isoforms <- specific.genes.isoforms(c.isoform.reads.wide)
 
-
-gene.reads.tissue <-
-    c.gene.reads.wide[!is.na(tissue.specific.genes$tissue),]
-
-isoform.reads.tissue <-
-    c.isoform.reads.wide[!is.na(tissue.specific.isoforms$tissue),]
-
 save(tissue.specific.genes,
      tissue.specific.isoforms,
-     isoform.reads.tissue,
-     gene.reads.tissue,
      file=args[length(args)])
 

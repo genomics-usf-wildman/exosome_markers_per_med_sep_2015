@@ -33,8 +33,8 @@ categorized_samples: R/categorize_samples.R chosen_samples \
 	GTEx_Data_V4_Annotations_SampleAttributesDS.txt
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
-tissue_specific_markers: R/tissue_specific_expression.R categorized_samples \
-	combined_read_counts
+tissue_specific_markers: R/tissue_specific_expression.R interesting_gene_reads \
+	interesting_isoform_reads
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 

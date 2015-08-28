@@ -123,12 +123,22 @@ interesting.isoforms <-
                  1]
 setkey(combined.gene.reads,"gene_short_name")
 interesting.gene.reads <-
-    combined.gene.reads[interesting.genes,]
+    combined.gene.reads[interesting.genes,list(Sample_Group,SRX,gene_id,
+                                               gene_short_name,
+                                               FPKM,FPKM_conf_lo,FPKM_conf_hi,
+                                               FPKM_status)]
 
 setkey(combined.isoform.reads,"tracking_id")
 
 interesting.isoform.reads <-
-    combined.isoform.reads[interesting.isoforms,]
+    combined.isoform.reads[interesting.isoforms,
+                           list(Sample_Group,SRX,
+                                tracking_id,
+                                gene_id,
+                                gene_short_name,
+                                FPKM,FPKM_conf_lo,FPKM_conf_hi,
+                                FPKM_status)
+                           ]
 
 save(interesting.gene.reads,
      gene.entropy,
