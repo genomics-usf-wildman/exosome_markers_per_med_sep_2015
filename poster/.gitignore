@@ -1,0 +1,17 @@
+auto
+figure
+poster.aux
+poster.bbl
+poster.bcf
+poster.blg
+poster.fdb_latexmk
+poster.fls
+poster.log
+poster.out
+poster.pdf
+poster.run.xml
+poster.tex
+cache
+poster.lof
+poster.lot
+poster.toc
