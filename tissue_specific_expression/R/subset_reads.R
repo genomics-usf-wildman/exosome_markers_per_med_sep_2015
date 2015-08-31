@@ -71,7 +71,7 @@ gene.var <-
           gene_short_name~.,
           fun.aggregate=function(x){var(x,na.rm=TRUE)},
           value.var="FPKM")
-colnames(gene.variance)[2] <- "var"
+colnames(gene.var)[2] <- "var"
 
 isoform.entropy <-
     dcast(combined.isoform.reads,
