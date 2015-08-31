@@ -3,3 +3,5 @@ chosen_samples
 combined_read_counts
 GTEx_Data_V4_Annotations_SampleAttributesDS.txt
 tissue_specific_markers
+interesting_gene_reads
+interesting_isoform_reads
