@@ -66,7 +66,7 @@ gene.max <-
           value.var="FPKM")
 colnames(gene.max)[2] <- "max"
 
-gene.variance <-
+gene.var <-
     dcast(combined.gene.reads,
           gene_short_name~.,
           fun.aggregate=function(x){var(x,na.rm=TRUE)},
