@@ -2,6 +2,8 @@
 
 include ../mk/variables.mk
 
+all: svm_classification tissue_specific_markers
+
 ## eventually, this file should be downloadable from somewhere like
 ## dryad; in the meantime, it will be made available from one of my
 ## servers once I publish the abstract
@@ -28,6 +30,11 @@ GTEx_Data_V4_Annotations_SampleAttributesDS.txt:
 	fi;
 
 
+svm_test_results: R/svm_testing.R svm_classification
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+svm_classification: R/classification_svm.R interesting_gene_reads
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 categorized_samples: R/categorize_samples.R chosen_samples \
 	GTEx_Data_V4_Annotations_SampleAttributesDS.txt
