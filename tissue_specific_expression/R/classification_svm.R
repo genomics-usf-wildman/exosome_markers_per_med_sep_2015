@@ -68,5 +68,7 @@ svm.train <-
 
 save(knn.train,
      svm.train,
+     genes.training,
+     genes.testing,
      file=args[length(args)])
 
