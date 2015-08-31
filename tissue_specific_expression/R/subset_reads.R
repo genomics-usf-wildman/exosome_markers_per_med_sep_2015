@@ -66,6 +66,13 @@ gene.max <-
           value.var="FPKM")
 colnames(gene.max)[2] <- "max"
 
+gene.variance <-
+    dcast(combined.gene.reads,
+          gene_short_name~.,
+          fun.aggregate=function(x){var(x,na.rm=TRUE)},
+          value.var="FPKM")
+colnames(gene.variance)[2] <- "var"
+
 isoform.entropy <-
     dcast(combined.isoform.reads,
           tracking_id~.,
@@ -79,6 +86,13 @@ isoform.max <-
           fun.aggregate=function(x){max(x,na.rm=TRUE)},
           value.var="FPKM")
 colnames(isoform.max)[2] <- "max"
+
+isoform.var <-
+    dcast(combined.isoform.reads,
+          tracking_id~.,
+          fun.aggregate=function(x){var(x,na.rm=TRUE)},
+          value.var="FPKM")
+colnames(isoform.max)[2] <- "var"
 
 
 
@@ -99,6 +113,7 @@ tissue.specificity.index <- function(expression){
 min.entropy <- 1.75
 min.tissue.specificity <- 0.98
 min.expression <- 3
+min.var <- 0.01
 
 gene.tissue.specificity <-
     data.frame(gene_short_name=c.gene.reads.wide[,1],
@@ -113,13 +128,15 @@ isoform.tissue.specificity <-
 interesting.genes <-
     gene.entropy[(gene.entropy[,2] >= min.entropy |
                       gene.tissue.specificity[,2] >= min.tissue.specificity)
-                 & gene.max[,2] >= min.expression,
+                 & gene.max[,2] >= min.expression
+                 & gene.var[,2] >= min.var,
                  1]
 
 interesting.isoforms <-
     isoform.entropy[(isoform.entropy[,2] >= min.entropy |
                       isoform.tissue.specificity[,2] >= min.tissue.specificity)
-                 & isoform.max[,2] >= min.expression,
+                 & isoform.max[,2] >= min.expression
+                 & isoform.var[,2] >= min.var,
                  1]
 setkey(combined.gene.reads,"gene_short_name")
 interesting.gene.reads <-
