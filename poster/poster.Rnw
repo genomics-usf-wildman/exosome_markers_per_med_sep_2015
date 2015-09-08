@@ -33,8 +33,25 @@
 
 \title{Identifying the Tissue of Origin of Extracellular Vesicles Using RNA Expression Signatures}
 \author{Don L. Armstrong, Monica Uddin, Derek Wildman}
-\usetheme{Basic}
+\usetheme{Default}
 
+% use this
+% http://www.identitystandards.illinois.edu/graphicstandardsmanual/othermedia/posterpresentation.html
+\definecolorstyle{UofI}{
+  \definecolor{boldBlue}{HTML}{002058}
+  \definecolor{boldOrange}{HTML}{E87722}
+  \definecolor{professionalBlue}{HTML}{606EB2}
+  \definecolor{professionalOrange}{HTML}{D45D00}
+  }{
+    \colorlet{backgroundcolor}{professionalBlue}
+    \colorlet{framecolor}{black}
+    \colorlet{titlefgcolor}{white}
+    \colorlet{titlebgcolor}{professionalOrange}
+    \colorlet{blocktitlebgcolor}{professionalOrange}
+    \colorlet{blocktitlefgcolor}{white}
+    }
+\usecolorstyle{UofI}
+    
 \begin{document}
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
