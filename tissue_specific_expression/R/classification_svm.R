@@ -4,13 +4,16 @@ library(reshape2)
 library(doMC)
 registerDoMC(cores=12)
 
-args <- c("interesting_gene_reads",
+args <- c("R/svm_training.R",
+          "interesting_gene_reads",
           "svm_classification"
           )
 
 args <- commandArgs(trailingOnly=TRUE)
 
-load(args[1])
+### this file provides the caret.run object
+source(args[1])
+load(args[2])
 
 
 gene.fpkm.wide <-
@@ -19,12 +22,23 @@ gene.fpkm.wide <-
           value.var="FPKM",
           fun.aggregate=function(x){x[1]})
 
+gene.names <- colnames(gene.fpkm.wide)[-(1:2)]
+
 ### for the time being, we're interested in uterus, placenta, or neither.
 gene.fpkm.wide$ut.pla.none <- as.character(gene.fpkm.wide$Sample_Group)
 gene.fpkm.wide$ut.pla.none[!(gene.fpkm.wide$ut.pla.none %in% c("uterus","placenta"))] <-
     "neither"
 gene.fpkm.wide$ut.pla.none <-
     factor(gene.fpkm.wide$ut.pla.none)
+
+for (group in c("uterus","placenta")) {
+    gene.fpkm.wide[[group]] <-
+        as.character(gene.fpkm.wide$Sample_Group)
+    gene.fpkm.wide[[group]][!(gene.fpkm.wide[[group]] %in% group)] <-
+        paste0("not ",group)
+    gene.fpkm.wide[[group]] <-
+        as.factor(gene.fpkm.wide[[group]])
+}
 
 ## set NA to zero
 gene.fpkm.wide[is.na(gene.fpkm.wide)] <- 0
@@ -35,40 +49,34 @@ in_training <-
     createDataPartition(gene.fpkm.wide$ut.pla.none,
                         p = .75,
                         list = FALSE)
-
 genes.training <-
     gene.fpkm.wide[in_training,]
 
 genes.testing <-
     gene.fpkm.wide[-in_training,]
 
-### seed generated with echo $RANDOM;
-set.seed(30224)
-knn.train <-
-    train(form=ut.pla.none~.,
-          data=genes.training[,-(1:2)],
-          method="knn",
-          trControl=trainControl(method="cv"),
-          tuneLength=5
-          )
-
-### seed generated with echo $RANDOM;
-set.seed(29224)
+trained.caret <- list()
 ### multi-class ROC https://www.kaggle.com/c/forest-cover-type-prediction/forums/t/10573/r-caret-using-roc-instead-of-accuracy-in-model-training
-svm.train <-
-    train(form=ut.pla.none~.,
-          data=genes.training[,-(1:2)],
-          preProc=c("center","scale"),
-          method="svmRadial",
-          trControl=trainControl(method="cv",number=10,repeats=10,classProbs=TRUE),
-          tuneLength=8,
-          metric="ROC"
-          )
+for (group in c("ut.pla.none","uterus","placenta")) {
+    ## seed generated with echo $RANDOM;
+    set.seed(29224)
+    trained.caret[[group]] <-
+        train(form=as.formula(paste0(group,"~.")),
+              data=genes.training[,c(group,gene.names)],
+              preProc=c("center","scale"),
+              method=caret.run[["run_method"]],
+              trControl=caret.run[["run_control"]],
+              tuneLength=caret.run[["tune_length"]],
+              metric="ROC"
+              )
+}
+save.env <- new.env()
+save.env[[caret.run[["object_name"]]]] <- trained.caret
+save.env[["genes.training"]] <- genes.training
+save.env[["genes.testing"]] <- genes.testing
+save.env[["gene.names"]] <- gene.names
 
-
-save(knn.train,
-     svm.train,
-     genes.training,
-     genes.testing,
+save(list=names(save.env),
+     envir=save.env,
      file=args[length(args)])
 

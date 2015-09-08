@@ -43,10 +43,14 @@ gene.training.predictions.knn.prob <-
 gene.training.predictions.knn.prob$prediction <-
     colnames(gene.training.predictions.knn.prob)[apply(gene.training.predictions.knn.prob,1,which.max)]
 
+genes.testing.actual <- genes.testing[,c("Sample_Group","ut.pla.none")]
+genes.training.actual <- genes.training[,c("Sample_Group","ut.pla.none")]
 
 save(gene.testing.predictions.svm.prob,
      gene.training.predictions.svm.prob,
      gene.testing.predictions.knn.prob,
      gene.training.predictions.knn.prob,
+     genes.testing.actual,
+     genes.training.actual,
      file=args[length(args)])
 
