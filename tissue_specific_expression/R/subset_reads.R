@@ -3,45 +3,59 @@ library(reshape2)
 
 args <- c("categorized_samples",
           "combined_read_counts",
-          "interesting_gene_reads",
-          "interesting_isoform_reads"
+          "additional_interesting_genes.txt",
+          "interesting_gene_reads"
           )
 
 args <- commandArgs(trailingOnly=TRUE)
 
 load(args[1])
 load(args[2])
+additional.genes <- fread(args[3])
+
+is.genes <- TRUE
+if (any(grepl("isoform",args[length(args)]))) {
+    is.genes <- FALSE
+}
 
 setkey(categorized.samples,"SRX")
-setnames(gene.counts,"srx","SRX")
-setkey(gene.counts,"SRX")
-setnames(isoform.counts,"srx","SRX")
-setkey(isoform.counts,"SRX")
+
+
+## we're using tracking_id for genes instead of gene_short_name
+## because SNORD5 and some other genes have multiple gene ids but also
+## share a common name
+if (is.genes) {
+    read.counts <- gene.counts
+} else {
+    read.counts <- isoform.counts
+}
+grouping.by.sample.formula <-
+    as.formula(tracking_id~Sample_Group)
+grouping.formula <-
+    as.formula(tracking_id~.)
+
+additional.tracking.ids <-
+    read.counts[!duplicated(tracking_id),
+                list(tracking_id,gene_short_name)][gene_short_name %in%
+                                                       additional.genes[[1]]][[1]]
+
+setnames(read.counts,"srx","SRX")
+setkey(read.counts,"SRX")
 
 ### combine sample name and srx into the gene counts file
-combined.gene.reads <-
-    categorized.samples[,list(Sample_Group,SRX)][gene.counts]
-
-### do the same for the isoforms
-combined.isoform.reads <-
-    categorized.samples[,list(Sample_Group,SRX)][isoform.counts]
+combined.reads <-
+    categorized.samples[,list(Sample_Group,SRX)][read.counts]
 
 .narm.mean <- function(x){
     if(length(x)==0) {return(0)} else {return(mean(x,na.rm=TRUE))}
 }
 
-c.gene.reads.wide <-
-    dcast(combined.gene.reads,
-          gene_short_name~Sample_Group,
+c.reads.wide <-
+    dcast(combined.reads,
+          grouping.by.sample.formula,
           fun.aggregate=.narm.mean,
           value.var="FPKM"
           )
-
-c.isoform.reads.wide <-
-    dcast(combined.isoform.reads,
-          tracking_id~Sample_Group,
-          fun.aggregate=.narm.mean,
-          value.var="FPKM")
 
 calculate.entropy <- function(x,bins=10,method="MM"){
     x <- as.numeric(x)
@@ -52,49 +66,26 @@ calculate.entropy <- function(x,bins=10,method="MM"){
     return(result)
 }
 
-gene.entropy <-
-    dcast(combined.gene.reads,
-          gene_short_name~.,
+grouping.entropy <-
+    dcast(combined.reads,
+          grouping.formula,
           fun.aggregate=calculate.entropy,
           value.var="FPKM")
-colnames(gene.entropy)[2] <- "entropy"
+colnames(grouping.entropy)[2] <- "entropy"
 
-gene.max <-
-    dcast(combined.gene.reads,
-          gene_short_name~.,
+grouping.max <-
+    dcast(combined.reads,
+          grouping.formula,
           fun.aggregate=function(x){max(x,na.rm=TRUE)},
           value.var="FPKM")
-colnames(gene.max)[2] <- "max"
+colnames(grouping.max)[2] <- "max"
 
-gene.var <-
-    dcast(combined.gene.reads,
-          gene_short_name~.,
+grouping.var <-
+    dcast(combined.reads,
+          grouping.formula,
           fun.aggregate=function(x){var(x,na.rm=TRUE)},
           value.var="FPKM")
-colnames(gene.var)[2] <- "var"
-
-isoform.entropy <-
-    dcast(combined.isoform.reads,
-          tracking_id~.,
-          fun.aggregate=calculate.entropy,
-          value.var="FPKM")
-colnames(isoform.entropy)[2] <- "entropy"
-
-isoform.max <-
-    dcast(combined.isoform.reads,
-          tracking_id~.,
-          fun.aggregate=function(x){max(x,na.rm=TRUE)},
-          value.var="FPKM")
-colnames(isoform.max)[2] <- "max"
-
-isoform.var <-
-    dcast(combined.isoform.reads,
-          tracking_id~.,
-          fun.aggregate=function(x){var(x,na.rm=TRUE)},
-          value.var="FPKM")
-colnames(isoform.max)[2] <- "var"
-
-
+colnames(grouping.var)[2] <- "var"
 
 ## this is the Tissue Specificity Index (eq 1) from Yanai et al.
 tissue.specificity.index <- function(expression){
@@ -115,56 +106,51 @@ min.tissue.specificity <- 0.98
 min.expression <- 3
 min.var <- 0.01
 
-gene.tissue.specificity <-
-    data.frame(gene_short_name=c.gene.reads.wide[,1],
-               tissue.specificity.index=apply(c.gene.reads.wide[,-1],1,
+tissue.specificity <-
+    data.frame(grouping=c.reads.wide[,1],
+               tissue.specificity.index=apply(c.reads.wide[,-1],1,
                    tissue.specificity.index))
 
-isoform.tissue.specificity <-
-    data.frame(tracking_id=c.isoform.reads.wide[,1],
-               tissue.specificity.index=apply(c.isoform.reads.wide[,-1],1,
-                   tissue.specificity.index))
+interesting.groups <-
+    grouping.entropy[((grouping.entropy[,2] >= min.entropy |
+                          tissue.specificity[,2] >= min.tissue.specificity)
+                      & grouping.max[,2] >= min.expression
+                      & grouping.var[,2] >= min.var) |
+                        grouping.entropy[,1] %in% additional.tracking.ids,
+                     1]
+if(is.genes) {
+    setkey(combined.reads,"tracking_id") 
+} else {
+    setkey(combined.reads,"tracking_id")
+}
 
-interesting.genes <-
-    gene.entropy[(gene.entropy[,2] >= min.entropy |
-                      gene.tissue.specificity[,2] >= min.tissue.specificity)
-                 & gene.max[,2] >= min.expression
-                 & gene.var[,2] >= min.var,
-                 1]
-
-interesting.isoforms <-
-    isoform.entropy[(isoform.entropy[,2] >= min.entropy |
-                      isoform.tissue.specificity[,2] >= min.tissue.specificity)
-                 & isoform.max[,2] >= min.expression
-                 & isoform.var[,2] >= min.var,
-                 1]
-setkey(combined.gene.reads,"gene_short_name")
-interesting.gene.reads <-
-    combined.gene.reads[interesting.genes,list(Sample_Group,SRX,gene_id,
-                                               gene_short_name,
-                                               FPKM,FPKM_conf_lo,FPKM_conf_hi,
-                                               FPKM_status)]
-
-setkey(combined.isoform.reads,"tracking_id")
-
-interesting.isoform.reads <-
-    combined.isoform.reads[interesting.isoforms,
-                           list(Sample_Group,SRX,
-                                tracking_id,
-                                gene_id,
-                                gene_short_name,
-                                FPKM,FPKM_conf_lo,FPKM_conf_hi,
-                                FPKM_status)
-                           ]
-
-save(interesting.gene.reads,
-     gene.entropy,
-     gene.tissue.specificity,
-     file=args[3])
-
-save(interesting.isoform.reads,
-     isoform.entropy,
-     isoform.tissue.specificity,
-     file=args[4])
+interesting.reads <-
+    combined.reads[interesting.groups,
+                   list(Sample_Group,
+                        SRX,
+                        tracking_id,
+                        gene_id,
+                        gene_short_name,
+                        FPKM,
+                        FPKM_conf_lo,
+                        FPKM_conf_hi,
+                        FPKM_status)]
+if (is.genes) {
+    interesting.gene.reads <- interesting.reads
+    gene.entropy <- grouping.entropy
+    gene.tissue.specificity <- tissue.specificity
+    save(interesting.gene.reads,
+         gene.entropy,
+         gene.tissue.specificity,
+         file=args[length(args)])
+} else {
+    interesting.isoform.reads <- interesting.reads
+    isoform.entropy <- grouping.entropy
+    isoform.tissue.specificity <- tissue.specificity
+    save(interesting.isoform.reads,
+         isoform.entropy,
+         isoform.tissue.specificity,
+         file=args[length(args)])
+}
 
      
