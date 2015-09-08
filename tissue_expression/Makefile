@@ -58,11 +58,18 @@ make_srx_dirs: make_srx_dir.R chosen_samples
 ISOFORM_FPKMS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_isoforms.fpkm_tracking)
 GENE_FPKMS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_genes.fpkm_tracking)
 STAR_LOGS=$(foreach srx,$(SRX_FILES),$(srx)/$(srx)_star/Log.final.out)
-combined_read_counts: combine_fpkms.R $(ISOFORM_FPKMS) $(GENE_FPKMS) $(STAR_LOGS) \
+combined_read_counts: combine_fpkms.R $(GENE_FPKMS) \
 	GTEx_Analysis_V4_RNA-seq_RNA-SeQCv1.1.8_gene_rpkm.gct.gz
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
+combined_star_logs: combine_star_logs.R  $(STAR_LOGS)
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+combined_isoform_reads: combine_isoform_fpkms.R $(ISOFORM_FPKMS)
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 BOWTIE_INDEX_DIR=ref_seqs/
 
