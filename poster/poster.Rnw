@@ -54,8 +54,9 @@
     
 \begin{document}
 
+
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
-opts_chunk$set(dev="cairo_pdf",out.width="\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
+opts_chunk$set(dev="cairo_pdf",out.width="0.20\\columnwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
 #opts_chunk$set(cache=TRUE, autodep=TRUE)
 options(device = function(file, width = 8, height = 7, ...) {
   cairo_pdf(tempfile(), width = width, height = height, ...)
@@ -67,16 +68,56 @@ library("proto")
 library("xtable")
 @ 
 
-<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum("../tissue_specific_expression/tissue_specific_markers")>>=
-load("../tissue_specific_expression/tissue_specific_markers")
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide")))>>=
+for (a in paste0("../tissue_specific_expression/",
+                 c("tissue_specific_markers",
+                   "interesting_gene_reads_wide"))) {
+    
+    load(a)
+}
 tissue.specific.genes <- data.table(tissue.specific.genes)
 @ 
 
 \maketitle
 
+<<specific.markers.plot.function,echo=FALSE,results="hide",warning=FALSE>>=
+specific.markers.plot <- function(tissue.name,genes) {
+    setkey(interesting.gene.reads.wide,"gene_short_name")
+    if (missing(genes))
+        genes <- as.character(tissue.specific.genes[tissue==tissue.name,gene])
+    interesting.tissues <- 
+        colnames(interesting.gene.reads.wide)[
+           which(apply(apply(interesting.gene.reads.wide[genes,-(1:2),with=FALSE],1,
+                             function(x){order(-x)==2}),1,any))+2]
+     interesting.tissues <- 
+        c("gene_short_name",tissue.name,interesting.tissues)
+    
+    tissue.specific.gene.reads <- 
+        data.table(melt(interesting.gene.reads.wide[genes,interesting.tissues,with=FALSE],
+                        id="gene_short_name",
+                        variable.name="tissue",
+                        value.name="FPKM"
+                        ))
+    tissue.specific.gene.reads[,log2.FPKM:=log2(FPKM+1)]
+    return(ggplot(tissue.specific.gene.reads,
+                  aes(y=gene_short_name,x=tissue))
+           + geom_tile(aes(fill=log2.FPKM))
+           + scale_fill_gradient(low="white",high="#002058")
+           + scale_x_discrete("", expand = c(0, 0))
+           + scale_y_discrete("", expand = c(0, 0))
+           + theme_grey(base_size=14)
+           + theme(legend.position = "none",
+                   axis.ticks = element_blank(), 
+                   axis.text.x = element_text(angle = 30, hjust = 1, vjust=1))
+           )
+}
+@ 
+
+\acro{EV}{Extracellular Vesicles}
+
 \begin{columns}
 
-  \column{0.3}
+  \column{0.25}
 
   \block{Introduction}{\acp{EV} are small (40-1000nm) compartments
     that can be found in blood, saliva, and urine. \acp{EV} originate
@@ -112,35 +153,100 @@ tissue.specific.genes <- data.table(tissue.specific.genes)
   
   \block{Methods}{ Nothing here yet. }
 
+
+\column{0.25}
   \block{Uterus Specific Genes}{
 
-<<uterus.specific.markers.table,results="asis",echo=FALSE>>=
-temp <- tissue.specific.genes[tissue=="uterus",list(gene,specificity)]
-setnames(temp,c("Gene","Tissue Specificity"))
-print(xtable(temp,
-             caption="Uterus specific genes",label="tab:uterus_specific_genes"),
-      floating=FALSE,
-      include.rownames=FALSE,
-      )
-rm(temp)
-@ 
+{\centering
+% <<uterus.specific.markers.table,results="asis",echo=FALSE>>=
+% temp <- tissue.specific.genes[tissue=="uterus",list(gene,specificity,gi.max)]
+% setorder(temp,-gi.max)
+% setnames(temp,c("Gene","Tissue Specificity","Mean Expression"))
+% print(xtable(temp,
+%              caption="Uterus specific genes",label="tab:uterus_specific_genes"),
+%       floating=FALSE,
+%       include.rownames=FALSE,
+%       )
+% rm(temp)
+% @ 
+% }
+
+<<uterus.specific.markers.figure,fig.width=8,fig.height=8,echo=FALSE>>=
+print(specific.markers.plot("uterus")
+      + xlab("Uterus Specific Genes")
+      + ylab("Tissue"))
+@
+}
+\captionof{figure}{Uterus specific genes. $\log_2 \mathrm{FPKM}$ of
+  genes with tissue specific indices $\ge 0.98$ which are specific to
+  uterus tissue in uterus and tissues with second highest expression
+  for those genes. With the exception of FTX\_1, which is expressed in
+  multiple fetal tissues, all genes are highly specific to uterus.}
+
 }
 
-\column{0.3}
   \block{Placenta Specific Genes}{
+{\centering
+% <<placenta.specific.markers.table,results="asis",echo=FALSE>>=
+% temp <- tissue.specific.genes[tissue=="placenta" & gi.max >= 1000,
+%                               list(gene,specificity,gi.max)]
+% setorder(temp,-gi.max)
+% setnames(temp,c("Gene","Tissue Specificity","Mean Expression"))
+% print(xtable(temp,
+%              caption="Placenta specific genes",label="tab:placenta_specific_genes"),
+%       floating=FALSE,
+%       include.rownames=FALSE,
+%       )
+% rm(temp)
+% @ 
+  
+<<placenta.specific.markers.figure,fig.width=8,fig.height=8,echo=FALSE>>=
+print(specific.markers.plot("placenta",
+                            genes=as.character(tissue.specific.genes[tissue=="placenta" & 
+                                                                         gi.max >= 1024
+                               ,gene]))
+      + xlab("Uterus Specific Genes")
+      + ylab("Tissue"))
+@
 
-<<placenta.specific.markers.table,results="asis",echo=FALSE>>=
-temp <- tissue.specific.genes[tissue=="placenta" & gi.max > 100,list(gene,specificity)]
-setnames(temp,c("Gene","Tissue Specificity"))
-print(xtable(temp,
-             caption="Placenta specific genes",label="tab:placenta_specific_genes"),
-      floating=FALSE,
-      include.rownames=FALSE,
-      )
-rm(temp)
-@ 
+}
+\captionof{figure}{Placenta specific genes. $\log_2 \mathrm{FPKM}$ of
+  genes with tissue specific indices $\ge 0.98$ and
+  $\mathrm{FPKM} \ge 1024$ which are specific to uterus tissue in
+  placenta and tissues with second highest expression for those
+  genes.}
 }
 
+\column{0.25}
+
+\block{SVM to distinguish tissues}{
+  % Describe SVM approach
+  
+  % Figure showing the samples
+  
+  % Ability to identify placenta
+
+  % Ability to identify uterus
+  
+  % ROC curve for uterus/not uterus
+}
+
+
+\column{0.25}
+
+\block{Identification of tissue in reduced reads}{
+  % Describe reduced read approach
+  
+  % 
+}
+
+\block{Conclusions}{
+}
+
+\block{References and Acknowledgements}{ The code and datasets for
+  this poster can be found at
+  \url{http://github.com/uiuc-cgm/exosome_markers_per_med_sep_2015.git}
+}
   
 \end{columns}
 
