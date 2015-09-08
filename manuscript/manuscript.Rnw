@@ -1,0 +1,166 @@
+\documentclass[english,12pt]{article}
+\usepackage{fontspec}
+\setmainfont{FreeSerif}
+\setsansfont{FreeSans}
+\setmonofont{FreeMono}
+\usepackage[letterpaper,left=1in,right=1in,top=1in,bottom=1in,headheight=14pt]{geometry}
+\usepackage{url}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage[bf]{caption}
+\usepackage{rotating}
+\usepackage{wrapfig}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage{txfonts}
+\usepackage{fancyref}
+\usepackage{acronym}
+\usepackage{array}
+\usepackage{dcolumn}
+\usepackage{adjustbox}
+\usepackage{longtable}
+\usepackage{pdflscape}
+\usepackage[backend=biber,natbib=true,hyperref=true,style=numeric-comp]{biblatex}
+\addbibresource{references.bib}
+%\usepackage[noblocks]{authblk}
+\usepackage[hyperfigures,bookmarks,colorlinks]{hyperref}
+%\usepackage[hyperfigures,bookmarks,colorlinks,citecolor=black,filecolor=black,linkcolor=black,urlcolor=black]{hyperref}
+% Floats at end for journals
+% \usepackage[nolists,figuresfirst,nomarkers,heads,nofighead,notabhead]{endfloat}
+% \AtBeginFigures{\section*{Figure Legends}\renewcommand{\efloatseparator}{\hbox{}}}
+% \AtBeginTables{\section*{Tables}\renewcommand{\efloatseparator}{\mbox{}}}
+\usepackage[nomargin,inline,draft]{fixme}
+\newcommand{\DLA}[1]{\textcolor{red}{\fxnote{DLA: #1}}}
+\usepackage[x11names,svgnames]{xcolor}
+\usepackage{texshade}
+\usepackage{tikz}
+\usepackage{nameref}
+\usepackage{zref-xr,zref-user}
+\newenvironment{narrow}[2]{%
+  \begin{list}{}{%
+      \setlength{\topsep}{0pt}%
+      \setlength{\leftmargin}{#1}%
+      \setlength{\rightmargin}{#2}%
+      \setlength{\listparindent}{\parindent}%
+      \setlength{\itemindent}{\parindent}%
+      \setlength{\parsep}{\parskip}}%
+  \item[]}{\end{list}}
+\def\newblock{\hskip}
+\newenvironment{paperquote}{%
+  \begin{quote}%
+     \it
+  }%
+  {\end{quote}}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.65}
+\renewcommand{\floatpagefraction}{0.60}
+%\renewcommand{\baselinestretch}{1.8}
+\newenvironment{enumerate*}%
+  {\begin{enumerate}%
+    \setlength{\itemsep}{0pt}%
+    \setlength{\parskip}{0pt}}%
+  {\end{enumerate}}
+\newenvironment{itemize*}%
+  {\begin{itemize}%
+    \setlength{\itemsep}{0pt}%
+    \setlength{\parskip}{0pt}}%
+  {\end{itemize}}
+\oddsidemargin 0.0in 
+\textwidth 6.5in
+\raggedbottom
+\clubpenalty = 10000
+\widowpenalty = 10000
+\pagestyle{fancy}
+\author{AUTHOR}
+\title{TITLE}
+\date{\ }
+\onehalfspacing
+                 
+\begin{document}
+
+<<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
+opts_chunk$set(dev="cairo_pdf",out.width="\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
+#opts_chunk$set(cache=TRUE, autodep=TRUE)
+options(device = function(file, width = 8, height = 7, ...) {
+  cairo_pdf(tempfile(), width = width, height = height, ...)
+})
+library("data.table")
+library("ggplot2")
+library("reshape2")
+library("proto")
+library("xtable")
+@ 
+
+
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum("../tissue_specific_expression/tissue_specific_markers")>>=
+load("../tissue_specific_expression/tissue_specific_markers")
+tissue.specific.genes <- data.table(tissue.specific.genes)
+setkey(tissue.specific.genes,"gene")
+@ 
+
+\section{Tissue Specific Markers}
+
+\subsection{Uterus Specific}
+<<uterus.specific.markers.table,results="asis",echo=FALSE>>=
+temp <- tissue.specific.genes[tissue=="uterus",
+                              list(gene,tissue,specificity,gi.max)]
+setorder(temp,-gi.max)
+setnames(temp,c("Gene","Tissue","Tissue Specificity","Mean Expression"))
+print(xtable(temp,
+             caption="Uterus specific genes",label="tab:uterus_specific_genes"),
+      include.rownames=FALSE,
+      )
+rm(temp)
+@ 
+
+FTX_1 is very interseting
+
+PCP4 is troubling, because this is a purkingie cell protein
+
+Some of the markers which we had previously seen (and in fact mention
+in our abstract have gone away).
+
+We originally identified MIR1914, MIR126, SNORD12, and SNORD5 as
+uterus specific. MIR1914 is actually placenta specific, as is MIR126.
+
+This occured because the placenta FPKMs we based the original list on
+did not properly align against miRNA or snRNA
+\fref{tab:missing_uterus_specific_genes}. The uterus calls also appear
+to be wrong or cooked; for example, SNORD5 has counts of 7000ish which
+are not inside of its confidence interval. This may be indicative of a
+off-by-one error or something else that is screwed up in their file.
+
+<<missing.uterus.specific.markers.table,results="asis",echo=FALSE>>=
+temp <- tissue.specific.genes[c("MIR1914","MIR126","SNORD12","SNORD5"),
+                              list(gene,tissue,specificity,gi.max)]
+setnames(temp,c("Gene","Tissue","Tissue Specificity","Mean Expression"))
+print(xtable(temp,
+             caption="Missing previously uterus specific genes",
+             label="tab:missing_uterus_specific_genes"),
+      include.rownames=FALSE,
+      )
+rm(temp)
+@ 
+
+\subsection{Placenta Specific Genes}
+
+<<placenta.specific.markers.table,results="asis",echo=FALSE>>=
+temp <- tissue.specific.genes[tissue=="placenta" & gi.max > 100,
+                              list(gene,tissue,specificity,gi.max)]
+setorder(temp,-gi.max)
+setnames(temp,c("Gene","Tissue","Tissue Specificity","Mean Expression"))
+print(xtable(temp,
+             caption="Placenta specific genes",label="tab:placenta_specific_genes"),
+      include.rownames=FALSE,
+      floating=FALSE,
+      tabular.environment="longtable"
+      )
+rm(temp)
+@ 
+
+
+
+\end{document}
