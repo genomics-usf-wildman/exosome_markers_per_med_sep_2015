@@ -33,6 +33,14 @@ GTEx_Data_V4_Annotations_SampleAttributesDS.txt:
 	wget -O $@ "http://www.gtexportal.org/static/datasets/gtex_analysis_v4/annotations/$@" || \
 		rm $@
 
+RME_NOT_IN_SRA=EG.name.txt 57epigenomes.RPKM.pc.gz 57epigenomes.RPKM.nc.gz 57epigenomes.RPKM.intronic.pc.gz 57epigenomes.RPKM.rb.gz
+
+rme_not_in_sra: $(RME_NOT_IN_SRA)
+
+$(RME_NOT_IN_SRA): %: 
+	wget -O $@ "http://egg2.wustl.edu/roadmap/data/byDataType/rna/expression/$@" || \
+		rm $@
+
 # we are currently not selecting the GSE samples this way; we might
 # eventually do this later.
 
