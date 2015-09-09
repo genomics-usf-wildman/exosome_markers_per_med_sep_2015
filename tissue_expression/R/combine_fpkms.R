@@ -73,7 +73,6 @@ for (file in epigenomes.files) {
         fread(paste0("zcat ",file),skip=0)
 }
 epigenomes.counts <- rbindlist(epigenomes.counts)
-setnames(epigenomes.counts,epigenomes.names[,GEO_Accession],epigenomes.names[,Sample_Name])
 
 setkey(epigenomes.counts,"gene_id")
 epigenomes.counts <-
