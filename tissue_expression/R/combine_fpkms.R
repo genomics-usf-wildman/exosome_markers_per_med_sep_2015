@@ -21,6 +21,10 @@ star.log.files <- grep("_star/Log.final.out",args,value=TRUE)
 
 gtex.file <- grep("GTEx_Analysis",args,value=TRUE)
 
+epigenomes.files <- grep("57epigenomes.RPKM",args,value=TRUE)
+epigenomes.samples.file <- grep("EG.name.txt",args,value=TRUE)
+epigenomes.annotation.file <- grep("Ensembl_v65.Gencode_v10.ENSG.gene_info",args,value=TRUE)
+
 .get.srx <- function(x){
     gsub("(SRX\\d+)/.+","\\1",x)
 }
@@ -51,6 +55,37 @@ gtex.counts <-
          value.name="FPKM",
          variable.name="srx")
 gene.counts[["gtex"]] <- gtex.counts
+
+### deal with 57epigenomes data
+epigenomes.names <- fread(epigenomes.samples.file,header=FALSE)
+setnames(epigenomes.names,c("GEO_Accession","Sample_Name"))
+
+epigenomes.annotation <- fread(epigenomes.annotation.file,header=FALSE)
+setnames(epigenomes.annotation,
+         c("gene_id","chr","start","stop",
+           "strand","type",
+           "gene_short_name","gene_full_name"))
+setkey(epigenomes.annotation,"gene_id")
+
+epigenomes.counts <- list()
+for (file in epigenomes.files) {
+    epigenomes.counts[[file]] <-
+        fread(paste0("zcat ",file),skip=0)
+}
+epigenomes.counts <- rbindlist(epigenomes.counts)
+setnames(epigenomes.counts,epigenomes.names[,GEO_Accession],epigenomes.names[,Sample_Name])
+
+setkey(epigenomes.counts,"gene_id")
+epigenomes.counts <-
+    epigenomes.annotation[,list(gene_id,gene_short_name)][epigenomes.counts]
+
+epigenomes.counts <-
+    melt(epigenomes.counts,
+         id.vars=c("gene_id","gene_short_name"),
+         value.name="FPKM",
+         variable.name="srx")
+gene.counts[["57epigenomes"]] <- epigenomes.counts
+
 
 gene.counts <- rbindlist(gene.counts,fill=TRUE)
 
