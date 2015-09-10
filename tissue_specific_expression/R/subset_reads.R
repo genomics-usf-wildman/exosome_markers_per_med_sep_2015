@@ -1,5 +1,6 @@
 library(data.table)
 library(reshape2)
+library(entropy)
 
 args <- c("categorized_samples",
           "combined_read_counts",
@@ -72,6 +73,9 @@ grouping.entropy <-
           fun.aggregate=calculate.entropy,
           value.var="FPKM")
 colnames(grouping.entropy)[2] <- "entropy"
+grouping.entropy <- data.table(grouping.entropy)
+setkey(grouping.entropy,"tracking_id")
+    
 
 grouping.max <-
     dcast(combined.reads,
@@ -79,6 +83,8 @@ grouping.max <-
           fun.aggregate=function(x){max(x,na.rm=TRUE)},
           value.var="FPKM")
 colnames(grouping.max)[2] <- "max"
+grouping.max <- data.table(grouping.max)
+setkey(grouping.max,"tracking_id")
 
 grouping.var <-
     dcast(combined.reads,
@@ -86,6 +92,8 @@ grouping.var <-
           fun.aggregate=function(x){var(x,na.rm=TRUE)},
           value.var="FPKM")
 colnames(grouping.var)[2] <- "var"
+grouping.var <- data.table(grouping.var)
+setkey(grouping.var,"tracking_id")
 
 ## this is the Tissue Specificity Index (eq 1) from Yanai et al.
 tissue.specificity.index <- function(expression){
@@ -101,23 +109,27 @@ tissue.specificity.index <- function(expression){
                (length(expression)-1))
 }
 
-min.entropy <- 1.75
+min.entropy <- 1.9
 min.tissue.specificity <- 0.98
-min.expression <- 3
+min.expression <- 10
 min.var <- 0.01
 
 tissue.specificity <-
-    data.frame(grouping=c.reads.wide[,1],
-               tissue.specificity.index=apply(c.reads.wide[,-1],1,
-                   tissue.specificity.index))
+    data.table(data.frame(tracking_id=c.reads.wide[,1],
+                          tissue.specificity.index=apply(c.reads.wide[,-1],1,
+                              tissue.specificity.index)))
+setkey(tissue.specificity,"tracking_id")
+
+grouping.variables <-
+    grouping.entropy[grouping.var][grouping.max][tissue.specificity]
 
 interesting.groups <-
-    grouping.entropy[((grouping.entropy[,2] >= min.entropy |
-                          tissue.specificity[,2] >= min.tissue.specificity)
-                      & grouping.max[,2] >= min.expression
-                      & grouping.var[,2] >= min.var) |
-                        grouping.entropy[,1] %in% additional.tracking.ids,
-                     1]
+    grouping.variables[((entropy >= min.entropy |
+                          tissue.specificity.index >= min.tissue.specificity)
+                        & max >= min.expression
+                        & var >= min.var) |
+                           tracking_id %in% additional.tracking.ids,
+                       tracking_id]
 if(is.genes) {
     setkey(combined.reads,"tracking_id") 
 } else {
@@ -137,19 +149,15 @@ interesting.reads <-
                         FPKM_status)]
 if (is.genes) {
     interesting.gene.reads <- interesting.reads
-    gene.entropy <- grouping.entropy
-    gene.tissue.specificity <- tissue.specificity
+    gene.grouping.variables <- grouping.variables
     save(interesting.gene.reads,
-         gene.entropy,
-         gene.tissue.specificity,
+         gene.grouping.variables,
          file=args[length(args)])
 } else {
     interesting.isoform.reads <- interesting.reads
-    isoform.entropy <- grouping.entropy
-    isoform.tissue.specificity <- tissue.specificity
+    isoform.grouping.variables <- grouping.variables
     save(interesting.isoform.reads,
-         isoform.entropy,
-         isoform.tissue.specificity,
+         isoform.grouping.variables,
          file=args[length(args)])
 }
 
