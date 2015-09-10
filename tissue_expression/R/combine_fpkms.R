@@ -54,6 +54,7 @@ gtex.counts <-
          id.vars=c("gene_id","gene_short_name"),
          value.name="FPKM",
          variable.name="srx")
+gtex.counts[,tracking_id:=gene_id]
 gene.counts[["gtex"]] <- gtex.counts
 
 ### deal with 57epigenomes data
