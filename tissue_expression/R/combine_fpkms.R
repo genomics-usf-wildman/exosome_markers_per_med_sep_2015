@@ -83,6 +83,7 @@ epigenomes.counts <-
          id.vars=c("gene_id","gene_short_name"),
          value.name="FPKM",
          variable.name="srx")
+epigenomes.counts[,tracking_id:=gene_id]
 gene.counts[["57epigenomes"]] <- epigenomes.counts
 
 
