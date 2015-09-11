@@ -11,12 +11,12 @@
 \usepackage{wrapfig}
 \usepackage{fancybox}
 \usepackage{booktabs}
-\usepackage{multirow}
+% \usepackage{multirow}
 \usepackage{acronym}
-\usepackage[backend=biber,natbib=true,hyperref=true,style=numeric-comp]{biblatex}
+\usepackage[backend=biber,natbib=true,hyperref=true,style=nature]{biblatex}
 \addbibresource{references.bib}
-\usepackage[nomargin,inline,draft]{fixme}
-\newcommand{\DLA}[1]{\textcolor{red}{\fxnote{DLA: #1}}}
+% \usepackage[nomargin,inline,draft]{fixme}
+% \newcommand{\DLA}[1]{\textcolor{red}{\fxnote{DLA: #1}}}
 \usepackage[hyperfigures,bookmarks,colorlinks,citecolor=black,filecolor=black,linkcolor=black,urlcolor=black]{hyperref}
 \usepackage{texshade}
 \usepackage{tikz}
@@ -53,7 +53,8 @@
 \usecolorstyle{UofI}
     
 \begin{document}
-
+\acrodef{EV}[EV]{Extracellular Vesicle}
+\acrodef{SVM}{Support Vector Machine}
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
 opts_chunk$set(dev="cairo_pdf",out.width="0.20\\columnwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
@@ -61,17 +62,20 @@ opts_chunk$set(dev="cairo_pdf",out.width="0.20\\columnwidth",out.height="0.7\\te
 options(device = function(file, width = 8, height = 7, ...) {
   cairo_pdf(tempfile(), width = width, height = height, ...)
 })
+options(digits=2)
 library("data.table")
 library("ggplot2")
 library("reshape2")
 library("proto")
+library("grid")
 library("xtable")
 @ 
 
-<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide")))>>=
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs")))>>=
 for (a in paste0("../tissue_specific_expression/",
                  c("tissue_specific_markers",
-                   "interesting_gene_reads_wide"))) {
+                   "interesting_gene_reads_wide",
+                   "combined_star_logs"))) {
     
     load(a)
 }
@@ -98,22 +102,25 @@ specific.markers.plot <- function(tissue.name,genes) {
                         variable.name="tissue",
                         value.name="FPKM"
                         ))
-    tissue.specific.gene.reads[,log2.FPKM:=log2(FPKM+1)]
+    tissue.specific.gene.reads[,`log_2(FPKM)`:=log2(FPKM+1)]
     return(ggplot(tissue.specific.gene.reads,
                   aes(y=gene_short_name,x=tissue))
-           + geom_tile(aes(fill=log2.FPKM))
-           + scale_fill_gradient(low="white",high="#002058")
+           + geom_tile(aes(fill=`log_2(FPKM)`))
+           + scale_fill_gradient(limits=c(0,17),
+                                 low="white",
+                                 high="#002058",
+                                 guide=guide_colourbar(title=expression(log[2](FPKM))))
            + scale_x_discrete("", expand = c(0, 0))
            + scale_y_discrete("", expand = c(0, 0))
            + theme_grey(base_size=14)
-           + theme(legend.position = "none",
-                   axis.ticks = element_blank(), 
-                   axis.text.x = element_text(angle = 30, hjust = 1, vjust=1))
+           + theme(legend.position = "top",
+               axis.ticks = element_blank(), 
+               plot.margin=unit(c(1,1,1,1),"mm"),
+               axis.text.x = element_text(angle = 30, hjust = 1, vjust=1))
            )
 }
 @ 
 
-\acro{EV}{Extracellular Vesicles}
 
 \begin{columns}
 
@@ -133,9 +140,20 @@ specific.markers.plot <- function(tissue.name,genes) {
     the source tissue of a specific \ac{EV}, we have identified
     tissue-specific miRNA and mRNA markers for multiple organs and
     tissues from existing publicly-available RNAseq transcriptomes by
-    calculating a tissue specificity index. Using machine learning
-    techniques we trained a multiclass support vector machine to
-    classify the tissue of origin.
+    calculating a tissue specificity index.
+    
+    The tissue specificity index for gene $g$ ($\tau_g$) is
+    
+    \begin{equation}
+      \tau_g = \frac{\sum_{i=1}^{i=N} 1-\frac{X_{i,g}}{\mathrm{max}(X_g)}}{N-1}
+    \end{equation}
+    \label{eq:tissue_specificity_index}
+    
+    where $N$ is the number of tissues, $X_{i,g}$ is the mean
+    expression of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is
+    the maximal expression of gene $g$ across all tissues.
+    
+    Using machine learning techniques we trained a multiclass \ac{SVM} to classify the tissue of origin.
     
 %     Our approach identified MIR1914, MIR126, SNORD12, and SNORD5 as
 %     uterus specific. CGB, LGALS13, and members of the PSG family were
@@ -151,7 +169,42 @@ specific.markers.plot <- function(tissue.name,genes) {
 %     individual patient. 
   }
   
-  \block{Methods}{ Nothing here yet. }
+  \block{Methods}{ %
+    \Sexpr{star.logs[grepl("Number of input reads",field),sum(as.numeric(value))]} %
+    %
+    RNAseq reads from %
+    % 
+    \Sexpr{length(star.logs[grepl("Number of input reads",field),value])} %
+    % 
+    samples corresponding to %
+    \Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} %
+    different tissues obtained from the Roadmap Epigenomics
+    \cite{Bernstein.ea2010:NIHRoadmapEpigenomicsMapping} and GTEx
+    \cite{Gtexconsortium.2015:Thegenotypetissueexpression} projects,
+    as well as uterine (GSE50599,
+    \cite{Chan.ea2014:Assessmentofmyometrialtranscriptome}) and
+    placenta (GSE66622,
+    \cite{Hughes.ea2015:Evaluatingintra-andinter-individual}) samples
+    from the SRA.
+    
+    Reads were aligned to \textit{Homo sapiens} reference genome
+    GRCh38 with Ensembl annotation release 80 using STAR v2.4.2a
+    \cite{Dobin.ea2013:STARultrafastuniversalRNA-seq} and called using
+    Tophat 2 v2.0.10
+    \cite{Trapnell.ea2009:TopHatdiscoveringsplicejunctions}. The
+    average percentage of uniquely mapped reads was %
+    \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value])))}
+    and the average total mapping percentage was %
+    \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value]))+as.numeric(gsub("%","",star.logs[field=="% of reads mapped to multiple loci",value])))}.
+    % 
+    For samples where the reads were not publicly available (GTEx and
+    some Roadmap Epigenomics samples), the RPKM were taken from
+    publicly available result files (see code for details).
+
+    The \ac{SVM} was generated using caret and svmRadial with 10
+    cycles of 10 repeats and a tune length of 8.
+    
+}
 
 
 \column{0.25}
@@ -243,9 +296,19 @@ print(specific.markers.plot("placenta",
 \block{Conclusions}{
 }
 
-\block{References and Acknowledgements}{ The code and datasets for
-  this poster can be found at
-  \url{http://github.com/uiuc-cgm/exosome_markers_per_med_sep_2015.git}
+\block{References}{ 
+  
+  \begin{center}
+    \mbox{}\vspace{-\baselineskip}
+  \printbibliography[heading=none]
+\end{center}
+}
+
+\block{Code and Datasets}{
+The code and datasets for this poster can be found at
+\url{http://github.com/uiuc-cgm/exosome_markers_per_med_sep_2015.git}
+  
+% 
 }
   
 \end{columns}
