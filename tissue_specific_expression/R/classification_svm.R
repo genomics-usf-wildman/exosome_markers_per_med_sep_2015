@@ -2,7 +2,7 @@ library(data.table)
 library(caret)
 library(reshape2)
 library(doMC)
-registerDoMC(cores=12)
+registerDoMC(cores=8)
 
 args <- c("R/svm_training.R",
           "interesting_gene_reads",
