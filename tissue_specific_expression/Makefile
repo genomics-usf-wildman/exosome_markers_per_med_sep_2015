@@ -2,6 +2,8 @@
 
 include ../mk/variables.mk
 
+VPATH=R
+
 all: svm_classification tissue_specific_markers
 
 ## eventually, this file should be downloadable from somewhere like
@@ -43,22 +45,27 @@ GTEx_Data_V4_Annotations_SampleAttributesDS.txt:
 			rm $@; \
 	fi;
 
+EG.name.txt:
+	if [ -e ../tissue_expression/$@ ]; then \
+		ln -s ../tissue_expression/$@ $@; \
+    else \
+		wget -O $@ "http://egg2.wustl.edu/roadmap/data/byDataType/rna/expression/$@" || \
+			rm $@; \
+	fi;
 
 svm_test_results: R/svm_testing.R svm_classification
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
-svm_classification: R/classification_svm.R R/svm_training.R interesting_gene_reads
-	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
-
-knn_classification: R/classification_svm.R R/knn_training.R interesting_gene_reads
-	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+%_classification: %_training.R classification_svm.R interesting_gene_reads
+	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@
 
 categorized_samples: R/categorize_samples.R chosen_samples \
-	GTEx_Data_V4_Annotations_SampleAttributesDS.txt
+	GTEx_Data_V4_Annotations_SampleAttributesDS.txt \
+	EG.name.txt
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
-tissue_specific_markers: R/tissue_specific_expression.R interesting_gene_reads \
-	interesting_isoform_reads
+tissue_specific_markers: R/tissue_specific_expression.R interesting_gene_reads_wide \
+	interesting_isoform_reads_wide
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 interesting_gene_reads: R/subset_reads.R categorized_samples \
@@ -69,9 +76,5 @@ interesting_isoform_reads: R/subset_reads.R categorized_samples \
 	combined_isoform_reads additional_interesting_genes.txt
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
-interesting_gene_reads_wide: R/wide_reads.R interesting_gene_reads
-	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
-
-interesting_isoform_reads_wide: R/wide_reads.R interesting_isoform_reads
-	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
-
+%_reads_wide: %_reads R/wide_reads.R 
+	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $@

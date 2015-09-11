@@ -1,8 +1,8 @@
 library(data.table)
 library(reshape2)
 
-args <- c("interesting_gene_reads",
-          "interesting_isoform_reads",
+args <- c("interesting_gene_reads_wide",
+          "interesting_isoform_reads_wide",
           "tissue_specific_markers")
 
 args <- commandArgs(trailingOnly=TRUE)
@@ -14,20 +14,6 @@ load(args[2])
 .narm.mean <- function(x){
     if(length(x)==0) {return(0)} else {return(mean(x,na.rm=TRUE))}
 }
-
-c.gene.reads.wide <-
-    dcast(interesting.gene.reads,
-          gene_short_name~Sample_Group,
-          fun.aggregate=.narm.mean,
-          value.var="FPKM"
-          )
-
-c.isoform.reads.wide <-
-    dcast(interesting.isoform.reads,
-          tracking_id~Sample_Group,
-          fun.aggregate=.narm.mean,
-          value.var="FPKM")
-
 ## this is the Tissue Specificity Index (eq 1) from Yanai et al.
 tissue.specificity.index <- function(expression){
     expression <- expression[!is.na(expression)]
@@ -78,8 +64,8 @@ specific.genes.isoforms <- function(data,min.specificity=0.98,min.max.expression
     return(tissue.specific.gi)
 }    
 
-tissue.specific.genes <- specific.genes.isoforms(c.gene.reads.wide)
-tissue.specific.isoforms <- specific.genes.isoforms(c.isoform.reads.wide)
+tissue.specific.genes <- specific.genes.isoforms(interesting.gene.reads.wide)
+tissue.specific.isoforms <- specific.genes.isoforms(interesting.isoform.reads.wide)
 
 save(tissue.specific.genes,
      tissue.specific.isoforms,

@@ -2,20 +2,27 @@ library(data.table)
 
 args <- c("chosen_samples",
           "GTEx_Data_V4_Annotations_SampleAttributesDS.txt",
+          "EG.name.txt",
           "categorized_samples")
 
 args <- commandArgs(trailingOnly=TRUE)
 
 load(args[1])
 gtex.samples <- fread(args[2])
+eg.samples <- fread(args[3],header=FALSE)
 
 categorized.samples <- copy(chosen.samples[,list(Sample_Name,SRX)])
 
 gtex.samples <- gtex.samples[,list(SMTSD,SAMPID)]
 setnames(gtex.samples,c("SAMPID","SMTSD"),c("SRX","Sample_Name"))
+setnames(eg.samples,c("SRX","Sample_Name"))
 categorized.samples <-
     rbind(categorized.samples,
-          gtex.samples)
+          gtex.samples,
+          eg.samples
+          )
+
+
 
 categorized.samples[,Sample_Group:=Sample_Name]
 categories <-
@@ -54,7 +61,13 @@ categories <-
                  replace="uterus"),
         placenta=
             list(match="^[AESX]\\d+_[abc]\\d?(?:\\.\\d+)?$",
-                 replace="placenta")
+                 replace="placenta"),
+        remove.primary.cells.skin=
+            list(match="(?i)_primary_cells_skin\\d+$",
+                 replace=""),
+        remove.understore=
+            list(match="[_ ]+",
+                 replace=" ")
         )
 for (category in names(categories)) {
     categorized.samples[grepl(categories[[category]]$match,Sample_Group),

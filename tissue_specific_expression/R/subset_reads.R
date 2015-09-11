@@ -108,7 +108,7 @@ tissue.specificity.index <- function(expression){
     return(sum(1-expression/max(expression))/
                (length(expression)-1))
 }
-
+R
 min.entropy <- 1.9
 min.tissue.specificity <- 0.98
 min.expression <- 10
