@@ -41,31 +41,38 @@ tissue.specificity.index <- function(expression){
 ##' @author Don Armstrong
 specific.genes.isoforms <- function(data,min.specificity=0.98,min.max.expression=10) {
     ## calculate the specificity index
+    genes <- data[,gene_short_name]
+    tracking.id=data[,tracking_id]
+    data <- data[,-c(1:2),with=FALSE]
+    if (any(colnames(data)=="universal human reference")) {
+        data <- data[,colnames(data)!="universal human reference",with=FALSE]
+    }
     specificity <-
-        apply(data[,-1],1,tissue.specificity.index)
+        apply(data,1,tissue.specificity.index)
     per.gi.max <-
-        apply(data[,-1],1,max)
+        apply(data,1,max)
     per.gi.which.max <-
-        apply(data[,-1],1,which.max)
+        apply(data,1,which.max)
     possibly.specific <-
         (per.gi.max >= min.max.expression &
              specificity >= min.specificity)
     possibly.specific[is.na(possibly.specific)] <-
         FALSE
     tissue.specific.gi <-
-        data.frame(gene=data[,1],
+        data.frame(gene=genes,
+                   tracking_id=tracking.id,
                    tissue=NA,
                    gi.max=per.gi.max,
                    specificity=specificity,
                    possibly.specific=possibly.specific,
                    gi.which.max=per.gi.which.max)
     tissue.specific.gi$tissue[possibly.specific] <- 
-        colnames(data)[per.gi.which.max+1][possibly.specific]
+        colnames(data)[per.gi.which.max][possibly.specific]
     return(tissue.specific.gi)
 }    
 
-tissue.specific.genes <- specific.genes.isoforms(interesting.gene.reads.wide)
-tissue.specific.isoforms <- specific.genes.isoforms(interesting.isoform.reads.wide)
+tissue.specific.genes <- data.table(specific.genes.isoforms(interesting.gene.reads.wide))
+tissue.specific.isoforms <- data.table(specific.genes.isoforms(interesting.isoform.reads.wide))
 
 save(tissue.specific.genes,
      tissue.specific.isoforms,
