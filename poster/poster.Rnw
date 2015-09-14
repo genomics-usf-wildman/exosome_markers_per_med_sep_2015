@@ -48,48 +48,58 @@
     \colorlet{framecolor}{black}
     \colorlet{titlefgcolor}{boldBlue}
     \colorlet{titlebgcolor}{white}
+    \colorlet{blockbodybgcolor}{white}
     \colorlet{blocktitlebgcolor}{professionalOrange}
-    \colorlet{blocktitlefgcolor}{white}
+    \colorlet{blocktitlefgcolor}{boldBlue}
     }
 \usecolorstyle{UofI}
+\defineblockstyle{UofIMinimal}{
+    titlewidthscale=1, bodywidthscale=1, titleleft,
+    titleoffsetx=0pt, titleoffsety=0pt, bodyoffsetx=0pt, bodyoffsety=0pt,
+    bodyverticalshift=0pt, roundedcorners=0, linewidth=0.2cm,
+    titleinnersep=1cm, bodyinnersep=1cm
+}{
+    \begin{scope}[line width=\blocklinewidth, rounded corners=\blockroundedcorners]
+       \ifBlockHasTitle %
+           \draw[draw=none,fill=blockbodybgcolor]
+               (blockbody.south west) rectangle (blocktitle.north east);
+           \draw[color=blocktitlebgcolor, loosely dashed]
+               (blocktitle.south west) -- (blocktitle.south east);%
+       \else
+             \draw[draw=none,fill=blockbodybgcolor]
+                 (blockbody.south west) rectangle (blockbody.north east);
+        \fi
+    \end{scope}
+}
+
+\useblockstyle{UofIMinimal}
 \definebackgroundstyle{UofIVertical}{
     \draw[line width=0pt, bottom color=backgroundcolor, 
     top color=white] (bottomleft) rectangle (topright);
 }
 \usebackgroundstyle{UofIVertical}
-\usetitlestyle{Empty}
-
+\definetitlestyle{UofITitle}{
+    width=\paperwidth, roundedcorners=0, linewidth=0pt, innersep=12mm,
+    titletotopverticalspace=5mm, titletoblockverticalspace=10mm,
+    titlegraphictotitledistance=10pt
+}{}
+\usetitlestyle{UofITitle}
 
 \makeatletter
-\renewcommand\maketitle[1][]{  % #1 keys
-    \normalsize
-    \setkeys{title}{#1}
-    % Title dummy to get title height
-    \node[transparent,inner sep=\TP@titleinnersep, line width=\TP@titlelinewidth, anchor=north, minimum width=\TP@visibletextwidth-2\TP@titleinnersep]
-        (TP@title) at ($(0, 0.5\textheight-\TP@titletotopverticalspace)$) {\parbox{\TP@titlewidth-2\TP@titleinnersep}{\TP@maketitle}};
-    \draw let \p1 = ($(TP@title.north)-(TP@title.south)$) in node {
-        \setlength{\TP@titleheight}{\y1}
-        \setlength{\titleheight}{\y1}
-        \global\TP@titleheight=\TP@titleheight
-        \global\titleheight=\titleheight
-    };
-
-    % Compute title position
-    \setlength{\titleposleft}{-0.5\titlewidth}
-    \setlength{\titleposright}{\titleposleft+\titlewidth}
-    \setlength{\titlepostop}{0.5\textheight-\TP@titletotopverticalspace}
-    \setlength{\titleposbottom}{\titlepostop-\titleheight}
-
-    % Title style (background)
-    \TP@titlestyle
-
-    % Title node
-    \node[inner sep=\TP@titleinnersep, line width=\TP@titlelinewidth, anchor=north, minimum width=\TP@visibletextwidth-2\TP@titleinnersep]
-        at (0,0.5\textheight-\TP@titletotopverticalspace) {\parbox{\TP@titlewidth-2\TP@titleinnersep}{\TP@maketitle}};
-
-    % Settings for blocks
-    \normalsize
-    \setlength{\TP@blocktop}{\titleposbottom-\TP@titletoblockverticalspace}
+\renewcommand\TP@maketitle{%
+   \begin{minipage}{0.8\textwidth}
+        \color{titlefgcolor}
+        {\bfseries \Huge \sc \@title \par}
+        \vspace*{1em}
+        {\huge \@author \par}
+        \vspace*{1em}
+        {\LARGE \@institute}
+    \end{minipage}%
+    \hfill
+    \begin{minipage}{0.2\linewidth}
+      \includegraphics[width=0.8\linewidth,height=6cm,keepaspectratio]{figures/igb_wordmark}
+      \includegraphics[width=0.8\linewidth,height=6cm,keepaspectratio]{figures/uofi_mark}
+    \end{minipage}
 }
 \makeatother
 
@@ -342,19 +352,19 @@ pl.roc.obj1 <-
              as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"placenta"]),
              percent=TRUE,
              ## main="Training vs Testing set for Uterus",
-             col="#1c61b6"
+             col="#002058"
              )
 pl.roc.obj2 <- 
     lines.roc(as.numeric(predictions.caret.svm[["placenta"]][["training"]][,"actual"])-1,
               as.numeric(predictions.caret.svm[["placenta"]][["training"]][,"placenta"]),
               percent=TRUE,
-              col="#008600")
+              col="#E87722")
 # testobj <- roc.test(rocobj1, rocobj2)
 # text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
 
 legend("bottomright",
        legend=c("Placenta Testing Set", "Placenta Training Set"),
-       col=c("#1c61b6", "#008600"),
+       col=c("#002058", "#E87722"),
        lwd=2)
 @ 
 \captionof{figure}{\ac{ROC} curve of the placenta \ac{SVM}. The
@@ -370,19 +380,19 @@ ut.roc.obj1 <-
              as.numeric(predictions.caret.svm[["uterus"]][["testing"]][,"uterus"]),
              percent=TRUE,
              ## main="Training vs Testing set for Uterus",
-             col="#1c61b6"
+             col="#002058"
              )
 ut.roc.obj2 <- 
     lines.roc(as.numeric(predictions.caret.svm[["uterus"]][["training"]][,"actual"])-1,
               as.numeric(predictions.caret.svm[["uterus"]][["training"]][,"uterus"]),
               percent=TRUE,
-              col="#008600")
+              col="#E87722")
 # testobj <- roc.test(rocobj1, rocobj2)
 # text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
 
 legend("bottomright",
        legend=c("Uterus Testing Set", "Uterus Training Set"),
-       col=c("#1c61b6", "#008600"),
+       col=c("#002058", "#E87722"),
        lwd=2)
 @ 
 \captionof{figure}{\ac{ROC} curve of the uterus \ac{SVM}. The uterus \ac{SVM} is
