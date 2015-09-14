@@ -54,6 +54,7 @@ EG.name.txt:
 	fi;
 
 %_test_results: %_training.R svm_testing.R svm_classification
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@
 
 %_classification: %_training.R classification_svm.R interesting_gene_reads
@@ -63,19 +64,24 @@ EG.name.txt:
 categorized_samples: R/categorize_samples.R chosen_samples \
 	GTEx_Data_V4_Annotations_SampleAttributesDS.txt \
 	EG.name.txt
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 tissue_specific_markers: R/tissue_specific_expression.R interesting_gene_reads_wide \
 	interesting_isoform_reads_wide
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 interesting_gene_reads: R/subset_reads.R categorized_samples \
 	combined_read_counts additional_interesting_genes.txt
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 interesting_isoform_reads: R/subset_reads.R categorized_samples \
 	combined_isoform_reads additional_interesting_genes.txt
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 %_reads_wide: %_reads R/wide_reads.R 
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $@
