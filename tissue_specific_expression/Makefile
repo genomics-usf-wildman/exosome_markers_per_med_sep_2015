@@ -57,6 +57,7 @@ EG.name.txt:
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@
 
 %_classification: %_training.R classification_svm.R interesting_gene_reads
+	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@
 
 categorized_samples: R/categorize_samples.R chosen_samples \
