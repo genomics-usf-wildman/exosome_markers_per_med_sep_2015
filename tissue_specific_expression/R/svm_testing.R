@@ -5,52 +5,49 @@ library(doMC)
 registerDoMC(cores=12)
 
 args <- c("svm_classification",
+          "R/svm_training.R",
           "svm_test_results"
           )
 
 args <- commandArgs(trailingOnly=TRUE)
 
 load(args[1])
+source(args[2])
 
+trained.object <- NULL
+eval(parse(text=paste0("trained.object <- ",caret.run[["object_name"]])))
 
+predictions.caret <- list()
 ### test the predictions using SVM
-gene.testing.predictions.svm.prob <-
-    predict(svm.train,
-            newdata=genes.testing,
-            type="prob")
-gene.testing.predictions.svm.prob$prediction <-
-    colnames(gene.testing.predictions.svm.prob)[apply(gene.testing.predictions.svm.prob,1,which.max)]
+for (group in names(trained.object)) {
+    predictions.caret[[group]] <-
+        list()
+    predictions.caret[[group]][["training"]] <- 
+        predict(trained.object[[group]],
+                newdata=genes.training,
+                type="prob")
+    predictions.caret[[group]][["training"]]$prediction <-
+        colnames(predictions.caret[[group]])[apply(predictions.caret[[group]],
+                                                   1,
+                                                   which.max)]
+    predictions.caret[[group]][["training"]]$actual <-
+        genes.training[,group]
+    predictions.caret[[group]][["testing"]] <-
+        predict(trained.object[[group]],
+                newdata=genes.training,
+                type="prob")
+    predictions.caret[[group]][["testing"]]$prediction <-
+        colnames(predictions.caret[[group]])[apply(predictions.caret[[group]],
+                                                   1,
+                                                   which.max)]
+    predictions.caret[[group]][["testing"]]$actual <-
+        genes.testing[,group]
+}
 
-gene.training.predictions.svm.prob <-
-    predict(svm.train,
-            newdata=genes.training,
-            type="prob")
-gene.training.predictions.svm.prob$prediction <-
-    colnames(gene.training.predictions.svm.prob)[apply(gene.training.predictions.svm.prob,1,which.max)]
+save.env <- new.env()
+save.env[[caret.run[["predictions"]]]] <- predictions.caret
 
-### test the predictions using the KNN
-gene.testing.predictions.knn.prob <-
-    predict(knn.train,
-            newdata=genes.testing,
-            type="prob")
-gene.testing.predictions.knn.prob$prediction <-
-    colnames(gene.testing.predictions.knn.prob)[apply(gene.testing.predictions.knn.prob,1,which.max)]
-
-gene.training.predictions.knn.prob <-
-    predict(knn.train,
-            newdata=genes.training,
-            type="prob")
-gene.training.predictions.knn.prob$prediction <-
-    colnames(gene.training.predictions.knn.prob)[apply(gene.training.predictions.knn.prob,1,which.max)]
-
-genes.testing.actual <- genes.testing[,c("Sample_Group","ut.pla.none")]
-genes.training.actual <- genes.training[,c("Sample_Group","ut.pla.none")]
-
-save(gene.testing.predictions.svm.prob,
-     gene.training.predictions.svm.prob,
-     gene.testing.predictions.knn.prob,
-     gene.training.predictions.knn.prob,
-     genes.testing.actual,
-     genes.training.actual,
+save(list=names(save.env),
+     env=save.env,
      file=args[length(args)])
 
