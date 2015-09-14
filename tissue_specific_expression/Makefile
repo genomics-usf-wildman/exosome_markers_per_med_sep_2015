@@ -53,8 +53,8 @@ EG.name.txt:
 			rm $@; \
 	fi;
 
-svm_test_results: R/svm_testing.R svm_classification
-	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+%_test_results: %_training.R svm_testing.R svm_classification
+	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@
 
 %_classification: %_training.R classification_svm.R interesting_gene_reads
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@
