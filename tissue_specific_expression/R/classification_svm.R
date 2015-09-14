@@ -69,6 +69,7 @@ for (group in c("ut.pla.none","uterus","placenta")) {
               tuneLength=caret.run[["tune_length"]],
               metric="ROC"
               )
+    message(paste0("finished ",group))
 }
 save.env <- new.env()
 save.env[[caret.run[["object_name"]]]] <- trained.caret
