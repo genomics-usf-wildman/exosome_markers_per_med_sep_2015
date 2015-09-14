@@ -33,6 +33,7 @@
 
 \title{Identifying the Tissue of Origin of Extracellular Vesicles Using RNA Expression Signatures}
 \author{Don L. Armstrong, Monica Uddin, Derek Wildman}
+\institute{Institute for Genomic Biology, Computing Genomes for Reproductive Health, University of Illinois, Urbana-Champaign}
 \usetheme{Default}
 
 % use this
@@ -45,16 +46,58 @@
   }{
     \colorlet{backgroundcolor}{professionalBlue}
     \colorlet{framecolor}{black}
-    \colorlet{titlefgcolor}{white}
-    \colorlet{titlebgcolor}{professionalOrange}
+    \colorlet{titlefgcolor}{boldBlue}
+    \colorlet{titlebgcolor}{white}
     \colorlet{blocktitlebgcolor}{professionalOrange}
     \colorlet{blocktitlefgcolor}{white}
     }
 \usecolorstyle{UofI}
-    
+\definebackgroundstyle{UofIVertical}{
+    \draw[line width=0pt, bottom color=backgroundcolor, 
+    top color=white] (bottomleft) rectangle (topright);
+}
+\usebackgroundstyle{UofIVertical}
+\usetitlestyle{Empty}
+
+
+\makeatletter
+\renewcommand\maketitle[1][]{  % #1 keys
+    \normalsize
+    \setkeys{title}{#1}
+    % Title dummy to get title height
+    \node[transparent,inner sep=\TP@titleinnersep, line width=\TP@titlelinewidth, anchor=north, minimum width=\TP@visibletextwidth-2\TP@titleinnersep]
+        (TP@title) at ($(0, 0.5\textheight-\TP@titletotopverticalspace)$) {\parbox{\TP@titlewidth-2\TP@titleinnersep}{\TP@maketitle}};
+    \draw let \p1 = ($(TP@title.north)-(TP@title.south)$) in node {
+        \setlength{\TP@titleheight}{\y1}
+        \setlength{\titleheight}{\y1}
+        \global\TP@titleheight=\TP@titleheight
+        \global\titleheight=\titleheight
+    };
+
+    % Compute title position
+    \setlength{\titleposleft}{-0.5\titlewidth}
+    \setlength{\titleposright}{\titleposleft+\titlewidth}
+    \setlength{\titlepostop}{0.5\textheight-\TP@titletotopverticalspace}
+    \setlength{\titleposbottom}{\titlepostop-\titleheight}
+
+    % Title style (background)
+    \TP@titlestyle
+
+    % Title node
+    \node[inner sep=\TP@titleinnersep, line width=\TP@titlelinewidth, anchor=north, minimum width=\TP@visibletextwidth-2\TP@titleinnersep]
+        at (0,0.5\textheight-\TP@titletotopverticalspace) {\parbox{\TP@titlewidth-2\TP@titleinnersep}{\TP@maketitle}};
+
+    % Settings for blocks
+    \normalsize
+    \setlength{\TP@blocktop}{\titleposbottom-\TP@titletoblockverticalspace}
+}
+\makeatother
+
 \begin{document}
 \acrodef{EV}[EV]{Extracellular Vesicle}
 \acrodef{SVM}{Support Vector Machine}
+\acrodef{ROC}{Receiver Operating Characteristic}
+\acrodef{KNN}{K Nearest Neighbors}
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
 opts_chunk$set(dev="cairo_pdf",out.width="0.20\\columnwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
@@ -69,14 +112,17 @@ library("reshape2")
 library("proto")
 library("grid")
 library("xtable")
+library("caret")
+library("pROC")
 @ 
 
-<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs")))>>=
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results")))>>=
 for (a in paste0("../tissue_specific_expression/",
                  c("tissue_specific_markers",
                    "interesting_gene_reads_wide",
-                   "combined_star_logs"))) {
-    
+                   "combined_star_logs",
+                   "svm_test_results"
+                   ))) {
     load(a)
 }
 tissue.specific.genes <- data.table(tissue.specific.genes)
@@ -145,7 +191,7 @@ specific.markers.plot <- function(tissue.name,genes) {
     The tissue specificity index for gene $g$ ($\tau_g$) is
     
     \begin{equation}
-      \tau_g = \frac{\sum_{i=1}^{i=N} 1-\frac{X_{i,g}}{\mathrm{max}(X_g)}}{N-1}
+      \tau_g = \frac{\sum_{i=1}^{i=N} \left(1-\frac{X_{i,g}}{\mathrm{max}(X_g)}\right)}{N-1}
     \end{equation}
     \label{eq:tissue_specificity_index}
     
@@ -201,8 +247,16 @@ specific.markers.plot <- function(tissue.name,genes) {
     some Roadmap Epigenomics samples), the RPKM were taken from
     publicly available result files (see code for details).
 
-    The \ac{SVM} was generated using caret and svmRadial with 10
-    cycles of 10 repeats and a tune length of 8.
+    The \ac{SVM} was generated using caret
+    \cite{Kuhn2008:Buildingpredictivemodelsinr} and svmRadial
+    \cite{Karatzoglou2004:kernlab} with 10 cycles of 10 repeats and a
+    tune length of 8 with a training set representing $\approx 75\%$ of the
+    samples ($\approx 2450$ samples total, including $\approx 35$
+    uterine or $\approx 60$ placenta) in each of the groups chosen at
+    random, with the remaining samples making up a testing set
+    ($\approx 820$ samples). For comparison purposes, we also
+    generated a \ac{KNN} based predictor using the same training and
+    testing sets of genes.
     
 }
 
@@ -234,7 +288,8 @@ print(specific.markers.plot("uterus")
   genes with tissue specific indices $\ge 0.98$ which are specific to
   uterus tissue in uterus and tissues with second highest expression
   for those genes. With the exception of FTX\_1, which is expressed in
-  multiple fetal tissues, all genes are highly specific to uterus.}
+  multiple fetal tissues and MYH11, a major component of smooth
+  muscle, all genes are highly specific to uterus.}
 
 }
 
@@ -274,14 +329,66 @@ print(specific.markers.plot("placenta",
 
 \block{SVM to distinguish tissues}{
   % Describe SVM approach
-  
+    
   % Figure showing the samples
   
   % Ability to identify placenta
 
   % Ability to identify uterus
+
+<<placenta.roc.curve,fig.width=8,fig.height=8,echo=FALSE>>=
+pl.roc.obj1 <- 
+    plot.roc(as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"actual"])-1,
+             as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"placenta"]),
+             percent=TRUE,
+             ## main="Training vs Testing set for Uterus",
+             col="#1c61b6"
+             )
+pl.roc.obj2 <- 
+    lines.roc(as.numeric(predictions.caret.svm[["placenta"]][["training"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm[["placenta"]][["training"]][,"placenta"]),
+              percent=TRUE,
+              col="#008600")
+# testobj <- roc.test(rocobj1, rocobj2)
+# text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
+
+legend("bottomright",
+       legend=c("Placenta Testing Set", "Placenta Training Set"),
+       col=c("#1c61b6", "#008600"),
+       lwd=2)
+@ 
+\captionof{figure}{\ac{ROC} curve of the placenta \ac{SVM}. The
+  placenta \ac{SVM} is fairly effective at distinguishing between
+  samples of placental origin and non-placental origin.}
+
   
   % ROC curve for uterus/not uterus
+
+<<uterus.roc.curve,fig.width=8,fig.height=8,echo=FALSE>>=
+ut.roc.obj1 <- 
+    plot.roc(as.numeric(predictions.caret.svm[["uterus"]][["testing"]][,"actual"])-1,
+             as.numeric(predictions.caret.svm[["uterus"]][["testing"]][,"uterus"]),
+             percent=TRUE,
+             ## main="Training vs Testing set for Uterus",
+             col="#1c61b6"
+             )
+ut.roc.obj2 <- 
+    lines.roc(as.numeric(predictions.caret.svm[["uterus"]][["training"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm[["uterus"]][["training"]][,"uterus"]),
+              percent=TRUE,
+              col="#008600")
+# testobj <- roc.test(rocobj1, rocobj2)
+# text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
+
+legend("bottomright",
+       legend=c("Uterus Testing Set", "Uterus Training Set"),
+       col=c("#1c61b6", "#008600"),
+       lwd=2)
+@ 
+\captionof{figure}{\ac{ROC} curve of the uterus \ac{SVM}. The uterus \ac{SVM} is
+  highly effective at distinguishing between samples of uterus origin and
+  non-uterus origin}
+
 }
 
 
