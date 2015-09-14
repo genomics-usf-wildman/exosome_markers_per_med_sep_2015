@@ -11,10 +11,10 @@ igb_wordmark.pdf:
 	rm -f Wordmark-black-tag-outlines.eps
 
 uofi_mark.zip: 
-	wget -O $@ "http://identitystandards.illinois.edu/assets/logos/uclogo_1867_vert_bold.zip"
+	wget -O $@ "http://identitystandards.illinois.edu/assets/logos/uclogo_1867_horz_bold.zip"
 
 uofi_mark.pdf:
-	unzip uofi_mark.zip uclogo_1867_vert_bold/pc/uclogo_1867_vert_bold.eps
-	epstopdf --outfile=$@ uclogo_1867_vert_bold/pc/uclogo_1867_vert_bold.eps
-	rm -rf uclogo_1867_vert_bold
+	unzip uofi_mark.zip uclogo_1867_horz_bold/pc/uclogo_1867_horz_bold.eps
+	epstopdf --outfile=$@ uclogo_1867_horz_bold/pc/uclogo_1867_horz_bold.eps
+	rm -rf uclogo_1867_horz_bold
 
