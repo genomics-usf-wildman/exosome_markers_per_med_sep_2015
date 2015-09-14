@@ -7,4 +7,4 @@ caret.run <-
          predictions="predictions.caret.knn"
          )
 
-registerDoMC(cores=2)
+registerDoMC(cores=1)
