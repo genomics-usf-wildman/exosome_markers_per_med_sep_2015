@@ -98,7 +98,6 @@
     \hfill
     \begin{minipage}{0.2\linewidth}
       \includegraphics[width=0.8\linewidth,height=6cm,keepaspectratio]{figures/igb_wordmark}
-      \includegraphics[width=0.8\linewidth,height=6cm,keepaspectratio]{figures/uofi_mark}
     \end{minipage}
 }
 \makeatother
@@ -427,7 +426,10 @@ The code and datasets for this poster can be found at
   
 % 
 }
-  
+\block{}{
+  \includegraphics[width=\linewidth,height=6cm,keepaspectratio]{figures/uofi_mark}
+}
+
 \end{columns}
 
 \end{document}
