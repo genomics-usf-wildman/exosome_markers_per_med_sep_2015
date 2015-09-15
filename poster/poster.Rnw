@@ -410,6 +410,17 @@ legend("bottomright",
 }
 
 \block{Conclusions}{
+  \begin{itemize}
+  \item Pregnancy-specific glycoproteins (PSG1-8) are specific to
+    placental tissues,and PAEP Progestagen-Associated Endometrial
+    Protein is specific to uterus, as previously described.
+  \item Numerous Long-noncoding RNA and smaller RNAs are specific to uterus and placenta
+  \item \ac{SVM} are able to accurately identify the tissue of origin
+    for uterus and placenta.
+%   \item Non-maternal variants may also be able to distinguish between
+%     placental reads and maternal reads in addition to the approach
+%     used here.
+  \end{itemize}
 }
 
 \block{References}{ 
