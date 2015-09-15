@@ -22,6 +22,7 @@
 \usepackage{tikz}
 \usepackage{nameref}
 \usepackage{zref-xr,zref-user}
+% \renewcommand*{\bibfont}{\small}
 
 % The textpos package is necessary to position textblocks at arbitary 
 % places on the page.  Use showboxes option to show outlines of textboxes.
@@ -123,14 +124,22 @@ library("grid")
 library("xtable")
 library("caret")
 library("pROC")
+
+capwords <- function(s, strict = FALSE) {
+    cap <- function(s) paste(toupper(substring(s, 1, 1)),
+                             {s <- substring(s, 2); if(strict) tolower(s) else s},
+                             sep = "", collapse = " " )
+    sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
+}
 @ 
 
-<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results")))>>=
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced")))>>=
 for (a in paste0("../tissue_specific_expression/",
                  c("tissue_specific_markers",
                    "interesting_gene_reads_wide",
                    "combined_star_logs",
-                   "svm_test_results"
+                   "svm_test_results",
+                   "svm_test_results_reduced"
                    ))) {
     load(a)
 }
@@ -345,7 +354,8 @@ print(specific.markers.plot("placenta",
 
   % Ability to identify uterus
 
-<<placenta.roc.curve,fig.width=8,fig.height=8,echo=FALSE>>=
+<<placenta.roc.curve,fig.width=8,fig.height=5,echo=FALSE>>=
+layout(matrix(1:2,1,2))
 pl.roc.obj1 <- 
     plot.roc(as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"actual"])-1,
              as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"placenta"]),
@@ -365,15 +375,7 @@ legend("bottomright",
        legend=c("Placenta Testing Set", "Placenta Training Set"),
        col=c("#002058", "#E87722"),
        lwd=2)
-@ 
-\captionof{figure}{\ac{ROC} curve of the placenta \ac{SVM}. The
-  placenta \ac{SVM} is fairly effective at distinguishing between
-  samples of placental origin and non-placental origin.}
 
-  
-  % ROC curve for uterus/not uterus
-
-<<uterus.roc.curve,fig.width=8,fig.height=8,echo=FALSE>>=
 ut.roc.obj1 <- 
     plot.roc(as.numeric(predictions.caret.svm[["uterus"]][["testing"]][,"actual"])-1,
              as.numeric(predictions.caret.svm[["uterus"]][["testing"]][,"uterus"]),
@@ -394,20 +396,64 @@ legend("bottomright",
        col=c("#002058", "#E87722"),
        lwd=2)
 @ 
-\captionof{figure}{\ac{ROC} curve of the uterus \ac{SVM}. The uterus \ac{SVM} is
-  highly effective at distinguishing between samples of uterus origin and
-  non-uterus origin}
-
+\captionof{figure}{\ac{ROC} curve of the placenta \ac{SVM} (left) and
+  uterus \ac{SVM} right) . Both \ac{SVM} are highly effective at
+  distinguishing between samples of uterus origin and non-uterus
+  origin.}
+\label{fig:plac_ut_full_roc}
 }
 
-
-\column{0.25}
 
 \block{Identification of tissue in reduced reads}{
   % Describe reduced read approach
-  
   % 
+<<placenta.roc.reduced.curve,fig.width=8,fig.height=10,echo=FALSE>>=
+layout(matrix(1:2,2,1))
+for (a in c("placenta","uterus")) {
+pl.roc.obj1 <- 
+    plot.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.1000.reads"]][,"actual"])-1,
+             as.numeric(predictions.caret.svm.reduced[[a]][["testing.1000.reads"]][,a]),
+             percent=TRUE,
+             ## main="Training vs Testing set for Uterus",
+             col="#002058"
+             )
+pl.roc.obj2 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.5000.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[[a]][["testing.5000.reads"]][,a]),
+              percent=TRUE,
+              col="#E87722")
+pl.roc.obj3 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.10.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[[a]][["testing.10.reads"]][,a]),
+              percent=TRUE,
+              col="green")
+pl.roc.obj4 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[["placenta"]][["testing.1.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[["placenta"]][["testing.1.reads"]][,"placenta"]),
+              percent=TRUE,
+              col="brown")
+# testobj <- roc.test(rocobj1, rocobj2)
+# text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
+
+legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads","1000 Reads", "5000 Reads")),
+       col=c("brown","green","#002058", "#E87722"),
+       lwd=2)
 }
+@ 
+\captionof{figure}{\ac{ROC} curve of reduced reads in Placenta and
+  Uterus samples with the indicated number of total reads. Reads were
+  reduced by sampling reads for each sample weighted by the FPKM
+  measured for each sample, and run using the same trained SVM
+  depicted in Figure \ref{fig:plac_ut_full_roc}. %
+  % 
+  The placenta \ac{SVM} is fairly accurate at distinguishing between
+  samples of placental origin and non-placental origin even when the
+  number of reads is very low (10). The uterus \ac{SVM} requires many
+  more reads in order to achieve similar accuracy. This is likely due
+  to the many fewer uterus specific genes.}
+}
+
+\column{0.25}
 
 \block{Conclusions}{
   \begin{itemize}
@@ -417,14 +463,17 @@ legend("bottomright",
   \item Numerous Long-noncoding RNA and smaller RNAs are specific to uterus and placenta
   \item \ac{SVM} are able to accurately identify the tissue of origin
     for uterus and placenta.
-%   \item Non-maternal variants may also be able to distinguish between
-%     placental reads and maternal reads in addition to the approach
-%     used here.
+  \item Very few sequenced reads are required to accurately identify
+    tissues of Placental origin. We are able to detect 100\% of the
+    placenta tissues with 80\% specificity with just 10 reads.
+  \item Non-maternal variants may also be able to distinguish between
+    placental reads and maternal reads in addition to the approach
+    used here.
   \end{itemize}
 }
 
 \block{References}{ 
-  
+
   \begin{center}
     \mbox{}\vspace{-\baselineskip}
   \printbibliography[heading=none]
@@ -432,8 +481,8 @@ legend("bottomright",
 }
 
 \block{Code and Datasets}{
-The code and datasets for this poster can be found at
-\url{http://github.com/uiuc-cgm/exosome_markers_per_med_sep_2015.git}
+The code and underlying data for this poster can be found at
+\url{http://dla2.us/p/em2015}
   
 % 
 }
