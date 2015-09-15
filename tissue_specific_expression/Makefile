@@ -57,6 +57,10 @@ EG.name.txt:
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@
 
+%_test_results_reduced: %_training.R svm_testing_reduced.R svm_classification
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@
+
 %_classification: %_training.R classification_svm.R interesting_gene_reads
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $(wordlist 3,$(words $^),$^) $@

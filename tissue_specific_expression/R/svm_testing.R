@@ -78,31 +78,40 @@ source(args[1])
 trained.object <- NULL
 eval(parse(text=paste0("trained.object <- ",caret.run[["object_name"]])))
 
+scale.and.zero <- function(x){
+    x <- scale(x)
+    x[!is.finite(x)] <- 0
+    x
+}
+
 predictions.caret <- list()
 ### test the predictions using SVM
 for (group in names(trained.object)) {
     predictions.caret[[group]] <-
         list()
-    predictions.caret[[group]][["training"]] <- 
+    result <- 
         my.predict.train(trained.object[[group]],
-                        newdata=genes.training[,c(gene.names)],
-                        type="prob")
-    predictions.caret[[group]][["training"]]$prediction <-
-        colnames(predictions.caret[[group]][["training"]])[apply(predictions.caret[[group]][["training"]],
-                                                   1,
-                                                   which.max)]
-    predictions.caret[[group]][["training"]]$actual <-
+                         newdata=scale.and.zero(genes.training[,c(gene.names)]),
+                         type="prob")
+    result$prediction <-
+        colnames(result)[apply(result,1,which.max)]
+    result$actual <-
         genes.training[,group]
-    predictions.caret[[group]][["testing"]] <-
+    
+    predictions.caret[[group]][["training"]] <- 
+        result
+
+    result <- 
         my.predict.train(trained.object[[group]],
-                newdata=genes.testing,
-                type="prob")
-    predictions.caret[[group]][["testing"]]$prediction <-
-        colnames(predictions.caret[[group]][["testing"]])[apply(predictions.caret[[group]][["testing"]],
-                                                   1,
-                                                   which.max)]
-    predictions.caret[[group]][["testing"]]$actual <-
+                         newdata=scale.and.zero(genes.testing[,c(gene.names)]),
+                         type="prob")
+    result$prediction <-
+        colnames(result)[apply(result,1,which.max)]
+    result$actual <-
         genes.testing[,group]
+    
+    predictions.caret[[group]][["testing"]] <- 
+        result
 }
 
 save.env <- new.env()

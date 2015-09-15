@@ -1,7 +1,7 @@
-library(data.table)
-library(caret)
-library(reshape2)
-library(doMC)
+library("data.table")
+library("caret")
+library("reshape2")
+library("doMC")
 registerDoMC(cores=8)
 
 args <- c("R/svm_training.R",
@@ -18,10 +18,15 @@ load(args[2])
 
 gene.fpkm.wide <-
     dcast(interesting.gene.reads,
-          Sample_Group+SRX~gene_short_name,
+          Sample_Group+SRX~tracking_id,
           value.var="FPKM",
           fun.aggregate=function(x){x[1]})
+## set NA to zero
+gene.fpkm.wide[is.na(gene.fpkm.wide)] <- 0
 
+## ignore genes with maximum expression less than 100 FPKM.
+gene.max <- apply(gene.fpkm.wide,2,function(x){max(x,na.rm=TRUE)})
+gene.fpkm.wide <- gene.fpkm.wide[,c(1,2,which(as.numeric(gene.max)>100))]
 gene.names <- colnames(gene.fpkm.wide)[-(1:2)]
 
 ### for the time being, we're interested in uterus, placenta, or neither.
@@ -40,9 +45,6 @@ for (group in c("uterus","placenta")) {
         as.factor(gene.fpkm.wide[[group]])
 }
 
-## set NA to zero
-gene.fpkm.wide[is.na(gene.fpkm.wide)] <- 0
-
 ### seed generated with echo $RANDOM
 set.seed(10609)
 in_training <-
@@ -57,13 +59,16 @@ genes.testing <-
 
 trained.caret <- list()
 ### multi-class ROC https://www.kaggle.com/c/forest-cover-type-prediction/forums/t/10573/r-caret-using-roc-instead-of-accuracy-in-model-training
-for (group in c("ut.pla.none","uterus","placenta")) {
+for (group in c("uterus","placenta")) {
     ## seed generated with echo $RANDOM;
     set.seed(29224)
+    data.scaled <- scale(genes.training[,(gene.names)])
+    data.scaled[!is.finite(data.scaled)] <- 0
+
     trained.caret[[group]] <-
         train(form=as.formula(paste0(group,"~.")),
-              data=genes.training[,c(group,gene.names)],
-              preProc=c("center","scale"),
+              data=data.frame(genes.training[,group,drop=FALSE],
+                  data.scaled),
               method=caret.run[["run_method"]],
               trControl=caret.run[["run_control"]],
               tuneLength=caret.run[["tune_length"]],
