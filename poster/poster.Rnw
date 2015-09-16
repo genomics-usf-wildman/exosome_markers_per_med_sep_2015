@@ -196,7 +196,7 @@ specific.markers.plot <- function(tissue.name,genes) {
     types and contain proteins, lipids, mRNA, miRNA, and many other
     non-coding RNAs. Because \acp{EV} contain mRNA from the cell of
     origin and can be obtained without invasive procedures, they are a
-    promising remote sensor of the transcriptome of tissues which
+    promising remote sensor of the transcriptome of tissues that
     would otherwise be inaccessible.
     
     One requirement for remotely sensing the transcriptome is
@@ -217,7 +217,15 @@ specific.markers.plot <- function(tissue.name,genes) {
     expression of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is
     the maximal expression of gene $g$ across all tissues.
     
-    Using machine learning techniques we trained a multiclass \ac{SVM} to classify the tissue of origin.
+    we we trained a multiclass \ac{SVM} to accurately identify the
+    tissue of origin, and present the results of the identification of
+    reads from uterine and placental origin here. Tables showing
+    tissue specific genes from the other %
+    %
+    \Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} %
+    % 
+    tissues can be found on \url{http://dla2.us/p/em2015}.
+    
     
 %     Our approach identified MIR1914, MIR126, SNORD12, and SNORD5 as
 %     uterus specific. CGB, LGALS13, and members of the PSG family were
@@ -238,7 +246,7 @@ specific.markers.plot <- function(tissue.name,genes) {
     %
     RNAseq reads from %
     % 
-    \Sexpr{length(star.logs[grepl("Number of input reads",field),value])} %
+    \Sexpr{nrow(genes.training)+nrow(genes.testing)} %
     % 
     samples corresponding to %
     \Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} %
