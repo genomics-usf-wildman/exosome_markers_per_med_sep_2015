@@ -108,6 +108,7 @@
 \acrodef{SVM}{Support Vector Machine}
 \acrodef{ROC}{Receiver Operating Characteristic}
 \acrodef{KNN}{K Nearest Neighbors}
+\acrodef{SRA}{Sequence Read Archive}
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
 opts_chunk$set(dev="cairo_pdf",out.width="0.20\\columnwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
@@ -220,7 +221,7 @@ specific.markers.plot <- function(tissue.name,genes) {
     we we trained a multiclass \ac{SVM} to accurately identify the
     tissue of origin, and present the results of the identification of
     reads from uterine and placental origin here. Tables showing
-    tissue specific genes from the other %
+    tissue specific genes from all %
     %
     \Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} %
     % 
@@ -246,18 +247,25 @@ specific.markers.plot <- function(tissue.name,genes) {
     %
     RNAseq reads from %
     % 
-    \Sexpr{nrow(genes.training)+nrow(genes.testing)} %
+    \Sexpr{length(star.logs[grepl("Number of input reads",field),value])} %
     % 
-    samples corresponding to %
+    samples (supplemented with FPKMs from
+    \Sexpr{nrow(predictions.caret.svm[["uterus"]][["training"]])+
+      nrow(predictions.caret.svm[["uterus"]][["testing"]]) -
+      length(star.logs[grepl("Number of input reads",field),value])} %
+    %
+    additional samples without raw data in the \ac{SRA})
+    % 
+    corresponding to %
     \Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} %
-    different tissues obtained from the Roadmap Epigenomics
+    different tissues were obtained from the Roadmap Epigenomics
     \cite{Bernstein.ea2010:NIHRoadmapEpigenomicsMapping} and GTEx
     \cite{Gtexconsortium.2015:Thegenotypetissueexpression} projects,
     as well as uterine (GSE50599,
     \cite{Chan.ea2014:Assessmentofmyometrialtranscriptome}) and
     placenta (GSE66622,
     \cite{Hughes.ea2015:Evaluatingintra-andinter-individual}) samples
-    from the SRA.
+    from the \ac{SRA}.
     
     Reads were aligned to \textit{Homo sapiens} reference genome
     GRCh38 with Ensembl annotation release 80 using STAR v2.4.2a
@@ -280,9 +288,7 @@ specific.markers.plot <- function(tissue.name,genes) {
     samples ($\approx 2450$ samples total, including $\approx 35$
     uterine or $\approx 60$ placenta) in each of the groups chosen at
     random, with the remaining samples making up a testing set
-    ($\approx 820$ samples). For comparison purposes, we also
-    generated a \ac{KNN} based predictor using the same training and
-    testing sets of genes.
+    ($\approx 820$ samples).
     
 }
 
@@ -310,12 +316,12 @@ print(specific.markers.plot("uterus")
       + ylab("Tissue"))
 @
 }
-\captionof{figure}{Uterus specific genes. $\log_2 \mathrm{FPKM}$ of
-  genes with tissue specific indices $\ge 0.98$ which are specific to
-  uterus tissue in uterus and tissues with second highest expression
-  for those genes. With the exception of FTX\_1, which is expressed in
-  multiple fetal tissues and MYH11, a major component of smooth
-  muscle, all genes are highly specific to uterus.}
+\captionof{figure}{Expression of uterus specific genes in uterus and
+  tissues with the second highest expression for those genes.
+  Expression is $\log_2 \mathrm{FPKM}$ and genes are tissue specific
+  if they have a tissue specific expression $\tau_g \ge 0.98$. The
+  known uterus specific gene PAEP and short RNAs ZNFX1-AS1\_3 (87bp)
+  and AL356310.1 (94bp) are highly uterus specific.}
 
 }
 
@@ -344,11 +350,13 @@ print(specific.markers.plot("placenta",
 @
 
 }
-\captionof{figure}{Placenta specific genes. $\log_2 \mathrm{FPKM}$ of
-  genes with tissue specific indices $\ge 0.98$ and
-  $\mathrm{FPKM} \ge 1024$ which are specific to uterus tissue in
-  placenta and tissues with second highest expression for those
-  genes.}
+\captionof{figure}{Expression of placenta specific genes in placenta
+  and tissues with the second highest expression for those genes.
+  Expression is $\log_2 \mathrm{FPKM}$ and genes are tissue specific
+  if they have a tissue specific expression $\tau_g \ge 0.98$ and
+  $\mathrm{FPKM} \ge 1024$ in placenta. The known placenta specific
+  PSG genes and CSH genes are all highly placenta specific, and short
+  RNAs mir-126, mir-622, and PAPPA-AS1 are fairly placenta specific.}
 }
 
 \column{0.25}
@@ -362,7 +370,7 @@ print(specific.markers.plot("placenta",
 
   % Ability to identify uterus
 
-<<placenta.roc.curve,fig.width=8,fig.height=5,echo=FALSE>>=
+<<placenta.roc.curve,fig.width=8,fig.height=4,echo=FALSE>>=
 layout(matrix(1:2,1,2))
 pl.roc.obj1 <- 
     plot.roc(as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"actual"])-1,
@@ -466,17 +474,19 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
 \block{Conclusions}{
   \begin{itemize}
   \item Pregnancy-specific glycoproteins (PSG1-8) are specific to
-    placental tissues,and PAEP Progestagen-Associated Endometrial
-    Protein is specific to uterus, as previously described.
-  \item Numerous Long-noncoding RNA and smaller RNAs are specific to uterus and placenta
+    placental tissues, and PAEP is specific to uterus, as previously
+    described.
+%   \item Numerous Long-noncoding RNA and smaller RNAs are specific to uterus and placenta
   \item \ac{SVM} are able to accurately identify the tissue of origin
     for uterus and placenta.
   \item Very few sequenced reads are required to accurately identify
     tissues of Placental origin. We are able to detect 100\% of the
     placenta tissues with 80\% specificity with just 10 reads.
+  \item We can easily identify exosomes originating from the placenta,
+    as even the smallest exosomes can contain 70 RNA molecules
+    \cite{Li.ea2014:AnalysisofRNAcontent}.
   \item Non-maternal variants may also be able to distinguish between
-    placental reads and maternal reads in addition to the approach
-    used here.
+    placental reads and maternal reads.
   \end{itemize}
 }
 
