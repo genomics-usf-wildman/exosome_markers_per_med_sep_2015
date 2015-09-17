@@ -13,6 +13,7 @@
 \usepackage{booktabs}
 % \usepackage{multirow}
 \usepackage{acronym}
+\usepackage{qrcode}
 \usepackage[backend=biber,natbib=true,hyperref=true,style=nature]{biblatex}
 \addbibresource{references.bib}
 % \usepackage[nomargin,inline,draft]{fixme}
@@ -22,7 +23,7 @@
 \usepackage{tikz}
 \usepackage{nameref}
 \usepackage{zref-xr,zref-user}
-% \renewcommand*{\bibfont}{\small}
+\renewcommand*{\bibfont}{\small}
 
 % The textpos package is necessary to position textblocks at arbitary 
 % places on the page.  Use showboxes option to show outlines of textboxes.
@@ -228,7 +229,7 @@ specific.markers.plot <- function(tissue.name,genes) {
     expression of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is
     the maximal expression of gene $g$ across all tissues.
     
-    we we trained a multiclass \ac{SVM} to accurately identify the
+    We also trained a multiclass \ac{SVM} to accurately identify the
     tissue of origin, and present the results of the identification of
     reads from uterine and placental origin here. Tables showing
     tissue specific genes from all %
@@ -283,9 +284,9 @@ specific.markers.plot <- function(tissue.name,genes) {
     Tophat 2 v2.0.10
     \cite{Trapnell.ea2009:TopHatdiscoveringsplicejunctions}. The
     average percentage of uniquely mapped reads was %
-    \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value])))}
+    \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value])))}\%
     and the average total mapping percentage was %
-    \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value]))+as.numeric(gsub("%","",star.logs[field=="% of reads mapped to multiple loci",value])))}.
+    \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value]))+as.numeric(gsub("%","",star.logs[field=="% of reads mapped to multiple loci",value])))}\%.
     % 
     For samples where the reads were not publicly available (GTEx and
     some Roadmap Epigenomics samples), the RPKM were taken from
@@ -484,9 +485,9 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
 
 \block{Conclusions}{
   \begin{itemize}
-  \item Pregnancy-specific glycoproteins (PSG1-8) are specific to
-    placental tissues, and PAEP is specific to uterus, as previously
-    described.
+  \item Pregnancy-specific glycoproteins (PSG1, 2, 3 et al.) are
+    specific to placental tissues, and PAEP is specific to uterus, as
+    previously described.
 %   \item Numerous Long-noncoding RNA and smaller RNAs are specific to uterus and placenta
   \item \ac{SVM} are able to accurately identify the tissue of origin
     for uterus and placenta.
@@ -505,14 +506,16 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
 
   \begin{center}
     \mbox{}\vspace{-\baselineskip}
-  \printbibliography[heading=none]
-\end{center}
+    \printbibliography[heading=none]
+  \end{center}
 }
 
 \block{Code and Datasets}{
 The code and underlying data for this poster can be found at
+\begin{center}
+\qrcode[padding]{http://dla2.us/p/em2015}
 \url{http://dla2.us/p/em2015}
-  
+\end{center}
 % 
 }
 \block{}{
