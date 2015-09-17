@@ -213,8 +213,8 @@ specific.markers.plot <- function(tissue.name,genes) {
     
     One requirement for remotely sensing the transcriptome is
     identifying the source tissue of a specific \ac{EV}. To identify
-    the source tissue of a specific \ac{EV}, we have identified
-    tissue-specific miRNA and mRNA markers for multiple organs and
+    the source tissue of a specific \ac{EV}, we have identified miRNA
+    and mRNA markers which are diagnostic of multiple organs and
     tissues from existing publicly-available RNAseq transcriptomes by
     calculating a tissue specificity index.
     
@@ -305,7 +305,7 @@ specific.markers.plot <- function(tissue.name,genes) {
 
 
 \column{0.25}
-  \block{Uterus Specific Genes}{
+  \block{Genes Diagnostic of Uterus}{
 
 {\centering
 % <<uterus.specific.markers.table,results="asis",echo=FALSE>>=
@@ -323,20 +323,20 @@ specific.markers.plot <- function(tissue.name,genes) {
 
 <<uterus.specific.markers.figure,fig.width=8,fig.height=8,echo=FALSE>>=
 print(specific.markers.plot("uterus")
-      + xlab("Uterus Specific Genes")
+      + xlab("Genes Diagnostic of Uterus ")
       + ylab("Tissue"))
 @
 }
-\captionof{figure}{Expression of uterus specific genes
+\captionof{figure}{Expression of genes diagnostic of uterus
   ($\tau_g \ge 0.98$) in uterus and all tissues with the second
-  highest expression for any of the uterus specific genes ordered by
-  their specificity to uterus. The known uterus specific gene PAEP and
-  short RNAs ZNFX1-AS1\_3 (87bp) and AL356310.1 (94bp) are highly
-  uterus specific.}
+  highest expression for any of the uterus-diagnostic genes
+  ordered by their tissue specificity. The known uterus-diagnostic
+  gene PAEP and short RNAs ZNFX1-AS1\_3 (87bp) and AL356310.1 (94bp)
+  are highly diagnostic of uterus.}
 
 }
 
-  \block{Placenta Specific Genes}{
+  \block{Genes Diagnostic of Placenta}{
 {\centering
 % <<placenta.specific.markers.table,results="asis",echo=FALSE>>=
 % temp <- tissue.specific.genes[tissue=="placenta" & gi.max >= 1000,
@@ -356,18 +356,18 @@ print(specific.markers.plot("placenta",
                             genes=as.character(tissue.specific.genes[tissue=="placenta" & 
                                                                          gi.max >= 1024
                                ,gene]))
-      + xlab("Uterus Specific Genes")
+      + xlab("Genes Diagnostic of Placenta")
       + ylab("Tissue"))
 @
 
 }
-\captionof{figure}{Expression of placenta specific genes
+\captionof{figure}{Expression of genes diagnostic of placenta
   ($\tau_g \ge 0.98$) with high expression ($\mathrm{FPKM} \ge 1024$)
   in placenta and all tissues with the second highest expression for
-  any placenta-specific gene ordered by their specificity to placenta.
-  The previously known placenta-specific PSG genes and CSH genes are
-  highly placenta specific and the short RNAs mir-126, mir-622, and
-  PAPPA-AS1 are fairly placenta specific.}
+  any placenta-diagnostic gene ordered by their specificity to
+  placenta. The previously known placenta-diagnostic PSG genes and
+  CSH genes are nearly unique to placenta and the short RNAs mir-126,
+  mir-622, and PAPPA-AS1 are less so.}
 }
 
 \column{0.25}
@@ -486,8 +486,8 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
 \block{Conclusions}{
   \begin{itemize}
   \item Pregnancy-specific glycoproteins (PSG1, 2, 3 et al.) are
-    specific to placental tissues, and PAEP is specific to uterus, as
-    previously described.
+    diagnostic of placental tissues, and PAEP is diagnostic of
+    uterus, as previously described.
 %   \item Numerous Long-noncoding RNA and smaller RNAs are specific to uterus and placenta
   \item \ac{SVM} are able to accurately identify the tissue of origin
     for uterus and placenta.
