@@ -149,6 +149,7 @@ tissue.specific.genes <- data.table(tissue.specific.genes)
 
 \maketitle
 
+
 <<specific.markers.plot.function,echo=FALSE,results="hide",warning=FALSE>>=
 specific.markers.plot <- function(tissue.name,genes) {
     setkey(interesting.gene.reads.wide,"gene_short_name")
@@ -156,10 +157,11 @@ specific.markers.plot <- function(tissue.name,genes) {
         genes <- as.character(tissue.specific.genes[tissue==tissue.name,gene])
     interesting.tissues <- 
         colnames(interesting.gene.reads.wide)[
-           which(apply(apply(interesting.gene.reads.wide[genes,-(1:2),with=FALSE],1,
-                             function(x){order(-x)==2}),1,any))+2]
-     interesting.tissues <- 
-        c("gene_short_name",tissue.name,interesting.tissues)
+         apply(interesting.gene.reads.wide[genes,-(1:2),with=FALSE],1,
+                             function(x){order(-x)[2]+2})]
+    
+    interesting.tissues <- 
+        c("gene_short_name",tissue.name,unique(interesting.tissues))
     
     tissue.specific.gene.reads <- 
         data.table(melt(interesting.gene.reads.wide[genes,interesting.tissues,with=FALSE],
@@ -168,8 +170,12 @@ specific.markers.plot <- function(tissue.name,genes) {
                         value.name="FPKM"
                         ))
     tissue.specific.gene.reads[,`log_2(FPKM)`:=log2(FPKM+1)]
+    gene.levels <- 
+        unique(as.character(tissue.specific.genes[tissue==tissue.name][order(specificity),gene]))
+    tissue.specific.gene.reads[,gene_short_name:=factor(gene_short_name,levels=gene.levels)]
     return(ggplot(tissue.specific.gene.reads,
-                  aes(y=gene_short_name,x=tissue))
+                  aes(y=gene_short_name,
+                          x=tissue))
            + geom_tile(aes(fill=`log_2(FPKM)`))
            + scale_fill_gradient(limits=c(0,17),
                                  low="white",
@@ -179,9 +185,13 @@ specific.markers.plot <- function(tissue.name,genes) {
            + scale_y_discrete("", expand = c(0, 0))
            + theme_grey(base_size=14)
            + theme(legend.position = "top",
-               axis.ticks = element_blank(), 
-               plot.margin=unit(c(1,1,1,1),"mm"),
-               axis.text.x = element_text(angle = 30, hjust = 1, vjust=1))
+                   axis.ticks = element_blank(),
+                   panel.grid=element_blank(),
+                   panel.border=element_blank(),
+                   panel.background=element_blank(),
+                   plot.background=element_blank(),
+                   plot.margin=unit(c(1,1,1,1),"mm"),
+                   axis.text.x = element_text(angle = 30, hjust = 1, vjust=1))
            )
 }
 @ 
@@ -316,12 +326,12 @@ print(specific.markers.plot("uterus")
       + ylab("Tissue"))
 @
 }
-\captionof{figure}{Expression of uterus specific genes in uterus and
-  tissues with the second highest expression for those genes.
-  Expression is $\log_2 \mathrm{FPKM}$ and genes are tissue specific
-  if they have a tissue specific expression $\tau_g \ge 0.98$. The
-  known uterus specific gene PAEP and short RNAs ZNFX1-AS1\_3 (87bp)
-  and AL356310.1 (94bp) are highly uterus specific.}
+\captionof{figure}{Expression of uterus specific genes
+  ($\tau_g \ge 0.98$) in uterus and all tissues with the second
+  highest expression for any of the uterus specific genes ordered by
+  their specificity to uterus. The known uterus specific gene PAEP and
+  short RNAs ZNFX1-AS1\_3 (87bp) and AL356310.1 (94bp) are highly
+  uterus specific.}
 
 }
 
@@ -350,13 +360,13 @@ print(specific.markers.plot("placenta",
 @
 
 }
-\captionof{figure}{Expression of placenta specific genes in placenta
-  and tissues with the second highest expression for those genes.
-  Expression is $\log_2 \mathrm{FPKM}$ and genes are tissue specific
-  if they have a tissue specific expression $\tau_g \ge 0.98$ and
-  $\mathrm{FPKM} \ge 1024$ in placenta. The known placenta specific
-  PSG genes and CSH genes are all highly placenta specific, and short
-  RNAs mir-126, mir-622, and PAPPA-AS1 are fairly placenta specific.}
+\captionof{figure}{Expression of placenta specific genes
+  ($\tau_g \ge 0.98$) with high expression ($\mathrm{FPKM} \ge 1024$)
+  in placenta and all tissues with the second highest expression for
+  any placenta-specific gene ordered by their specificity to placenta.
+  The previously known placenta-specific PSG genes and CSH genes are
+  highly placenta specific and the short RNAs mir-126, mir-622, and
+  PAPPA-AS1 are fairly placenta specific.}
 }
 
 \column{0.25}
@@ -466,7 +476,8 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
   samples of placental origin and non-placental origin even when the
   number of reads is very low (10). The uterus \ac{SVM} requires many
   more reads in order to achieve similar accuracy. This is likely due
-  to the many fewer uterus specific genes.}
+  to the much smaller number of uterus specific genes in comparison to
+  placenta.}
 }
 
 \column{0.25}
