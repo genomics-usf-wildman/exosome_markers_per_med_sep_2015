@@ -39,10 +39,10 @@ a specific EV. To identify the source tissue of a specific EV, we have
 identified tissue-characterizing ncRNA and mRNA markers for multiple
 organs and tissues from existing publicly-available RNAseq
 transcriptomes by calculating a tissue specificity index. Our approach
-identified PAEP and MYH11 as well as non-codingc RNAs FTX_1 (71bp),
+identified PAEP and MYH11 as well as non-coding RNAs FTX_1 (71bp),
 ZNFX1-AS1_3 (87bp), PVT1_3 (95bp) as characteristic of uterus. We
 identified CGA, members of the CSH family, members of the PSG family,
-as well as ncRNAS AC026803.1 (82bp), MIR126 (85bp), MIR662 (95bp),
+as well as ncRNAs AC026803.1 (82bp), MIR126 (85bp), MIR662 (95bp),
 AC108933.1 (93bp) and NEAT1_3 (159bp) as highly-expressed (FPKM
 ≥ 1024) transcripts characteristic of placenta. Using machine learning
 techniques we also trained a Support Vector Machine to classify the
