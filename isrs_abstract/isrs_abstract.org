@@ -18,11 +18,13 @@
 # The abstract should not exceed 3000 characters (not including spaces).
 
 *IDENTIFYING EXTRACELLULAR VESICLES ORIGINATING FROM THE PLACENTA AND*
-*UTERUS USING RNA EXPRESSION SIGNATURES.* _Don L. Armstrong^{1}_, Monica
-Uddin^{1,2}, Derek Wildman.^{1}  1. /Institute for Genomic Biology/,
-/Computing Genomes for Reproductive Health, University of Illinois/,
-/Urbana-Champaign. 2. Department of Psychology, University of Illinois,
-Urbana-Champaign./
+*UTERUS USING RNA EXPRESSION SIGNATURES.*
+# 
+_Don L. Armstrong^{1}_, Monica Uddin^{1,2}, Derek Wildman.^{1,3} 1.
+/Carl R. Woese Institute for Genomic Biology, University of Illinois,
+Urbana-Champaign./ 2. /Department of /Psychology, University of
+Illinois, Urbana-Champaign./ 3. /Department of /Molecular and
+integrative Physiology, University of Illinois, Urbana-Champaign./
 
 
 Extracellular vesicles (EVs) are small (40-1000nm) compartments that
@@ -30,24 +32,27 @@ can be found in blood, saliva, and urine. EVs originate from the
 plasma membrane or multivesicular endosome of many cell types and
 contain proteins, lipids, mRNA, miRNA, and many other non-coding RNAs.
 Because EVs contain mRNA from the cell of origin and can be obtained
-without invasive procedures, they are a promising remote sensor of the
-transcriptome of tissues which would otherwise be inaccessible. One
-requirement for remotely sensing the transcriptome is identifying the
-source tissue of a specific EV. To identify the source tissue of a
-specific EV, we have identified tissue-characterizing miRNA and mRNA
-markers for multiple organs and tissues from existing
-publicly-available RNAseq transcriptomes by calculating a tissue
-specificity index. Our approach identified FTX_1, PAEP, ZNFX1-AS1_3,
-and PVT1_3 as characteristic of uterus and CGA, members of the CSH
-family, and members of the PSG family as characteristic of placenta.
-Using machine learning techniques we also trained a Support Vector
-Machine to classify the tissue of origin. The accuracy of the
-classifier was verified using RNAseq transcriptome data not in the
-training set. We show the applicability of the classifier to simulated
-EVs by down sampling reads and accurately identify placenta with only
-10 reads, whereas uterus requires 5×10^{3} reads. When coupled with
-single-EV sequencing (or variant calling in whole blood samples for
-placental tissue of fetal origin), our classifier enables clinicians
-to monitor disease-specific markers over the course of treatment
-without biopsies, increasing the ability of clinicians to adapt
-treatment modalities to the individual patient.
+without invasive procedures, EVs are remote sensors of the
+transcriptomes of otherwise inaccessible tissues. One requirement for
+remotely sensing the transcriptome is identifying the source tissue of
+a specific EV. To identify the source tissue of a specific EV, we have
+identified tissue-characterizing ncRNA and mRNA markers for multiple
+organs and tissues from existing publicly-available RNAseq
+transcriptomes by calculating a tissue specificity index. Our approach
+identified PAEP and MYH11 as well as non-codingc RNAs FTX_1 (71bp),
+ZNFX1-AS1_3 (87bp), PVT1_3 (95bp) as characteristic of uterus. We
+identified CGA, members of the CSH family, members of the PSG family,
+as well as ncRNAS AC026803.1 (82bp), MIR126 (85bp), MIR662 (95bp),
+AC108933.1 (93bp) and NEAT1_3 (159bp) as highly-expressed (FPKM
+≥ 1024) transcripts characteristic of placenta. Using machine learning
+techniques we also trained a Support Vector Machine to classify the
+tissue of origin. The accuracy of the classifier was verified using
+RNAseq transcriptome data not in the training set. We show the
+applicability of the classifier to simulated EVs by down sampling
+sequencing reads and accurately identify placenta with only 10 reads,
+whereas uterus requires 5×10^{3} reads. When coupled with single-EV
+sequencing (or microchimerism-aware variant calling in whole blood
+samples for placental tissue of fetal origin), our classifier enables
+clinicians to monitor disease-specific markers over the course of
+treatment without biopsies, increasing the ability of clinicians to
+adapt treatment modalities to the individual patient.
