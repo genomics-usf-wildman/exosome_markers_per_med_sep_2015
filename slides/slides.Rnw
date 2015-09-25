@@ -67,10 +67,10 @@
     \end{tikzpicture}}
 }
 
-\title{Identifying Extracellular Vesicles of Placenta and Uterine 
+\title[EVs of Placenta and Uterus]{Identifying Extracellular Vesicles of Placenta and Uterine 
   Origin Using RNA Expression Signatures}
-\author{Don L. Armstrong, Monica Uddin, Derek Wildman}
-\institute{Institute for Genomic Biology, Computing Genomes 
+\author[Don Armstrong et. al.]{Don L. Armstrong, Monica Uddin, Derek Wildman}
+\institute[IGB]{Institute for Genomic Biology, Computing Genomes 
   for Reproductive Health, University of Illinois, Urbana-Champaign}
 \subject{RNA expression}
 
@@ -184,50 +184,41 @@ specific.markers.plot <- function(tissue.name,genes) {
 \subsection{Identifying source tissue of \acp{EV}}
 
 \begin{frame}{Identifying source tissue of \acp{EV}}
+  \begin{enumerate}
+  \item We want to remotely sense the transcriptome of tissues
+  \item For each \ac{EV}, identify the source tissue
+
+  \item So, identify miRNA and mRNA markers which are characteristic of
+    multiple organs and tissues
+    \begin{itemize}    
+    \item Use publicly-available RNAseq transcriptomes
+      
+    \item Identify characteristic markers by calculating a tissue
+      specificity index for each gene $g$ ($\tau_g$):
+      
+      \begin{equation}
+        \tau_g = \frac{\sum_{i=1}^{i=N} \left(1-\frac{X_{i,g}}{\mathrm{max}(X_g)}\right)}{N-1}
+      \end{equation}
+      \label{eq:tissue_specificity_index}
+ \item $N$ is the number of tissues, $X_{i,g}$ is the mean expression
+   of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is the maximal
+   expression of gene $g$
+    \end{itemize}
+  \end{enumerate}
+
+\end{frame}
   
-  One requirement for remotely sensing the transcriptome is
-  identifying the source tissue of a specific \ac{EV}. To identify the
-  source tissue of a specific \ac{EV}, we have identified miRNA and
-  mRNA markers which are characteristic of multiple organs and tissues
-  from existing publicly-available RNAseq transcriptomes by
-  calculating a tissue specificity index.
-    
-  The tissue specificity index for gene $g$ ($\tau_g$) is
-    
-  \begin{equation}
-    \tau_g = \frac{\sum_{i=1}^{i=N} \left(1-\frac{X_{i,g}}{\mathrm{max}(X_g)}\right)}{N-1}
-  \end{equation}
-  \label{eq:tissue_specificity_index}
-  
-  where $N$ is the number of tissues, $X_{i,g}$ is the mean expression
-  of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is the maximal
-  expression of gene $g$ across all tissues.
-    
- \end{frame}
-  
- \begin{frame}{\ac{SVM}}
-    We also trained a multiclass \ac{SVM} to accurately identify the
-    tissue of origin, and present the results of the identification of
-    reads from uterine and placental origin here. Tables showing
-    tissue specific genes from all %
-    %
-    \Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} %
-    % 
-    tissues can be found on \url{http://dla2.us/p/em2015}.
-    
-    
-%     Our approach identified MIR1914, MIR126, SNORD12, and SNORD5 as
-%     uterus specific. CGB, LGALS13, and members of the PSG family were
-%     identified as placenta specific. The accuracy of the classifier
-%     was verified using RNAseq transcriptome data not in the training
-%     set. We show the applicability of the classifier to simulated EVs
-%     by down sampling reads to $10^5$ reads and biasing the reads to
-%     account for preferential association of RNA motifs with EV
-%     packaging machinery. When coupled with single-EV sequencing, our
-%     classifier enables clinicians to monitor disease-specific markers
-%     over the course of treatment without biopsies, increasing the
-%     ability of clinicians to adapt treatment modalities to the
-%     individual patient. 
+\begin{frame}{Source of \acp{EV} --- Machine Learning}
+  \begin{itemize}
+  \item High tissue specificity might not be the best discriminator
+  \item Use machine learning techniques!
+  \item Train a \ac{SVM}
+  \item Use genes which are highly expressed and have either
+    \begin{itemize}
+    \item High Tissue Specific Index ($\tau_g$)
+    \item High Entropy
+    \end{itemize}
+  \end{itemize}
 \end{frame}
   
 \section{Methods}
@@ -260,7 +251,7 @@ specific.markers.plot <- function(tissue.name,genes) {
     \cite{Hughes.ea2015:Evaluatingintra-andinter-individual})
   \item aligned to GRCh38 using STAR
     \cite{Dobin.ea2013:STARultrafastuniversalRNA-seq}
-  \item called using Cufflinks 2 v2.0.10
+  \item quantified using Cufflinks 2 v2.0.10
     \cite{Trapnell.ea2009:TopHatdiscoveringsplicejunctions}.
     
   \item Mean uniquely mapped reads: %
@@ -359,15 +350,20 @@ print(specific.markers.plot("placenta",
   % Ability to identify uterus
 
 \begin{frame}{Generating SVM}
-  The \ac{SVM} was generated using caret
+ \begin{itemize}
+ \item \ac{SVM} was generated using caret
     \cite{Kuhn2008:Buildingpredictivemodelsinr} and svmRadial
-    \cite{Karatzoglou2004:kernlab} with 10 cycles of 10 repeats and a
-    tune length of 8 with a training set representing $\approx 75\%$ of the
-    samples ($\approx 2450$ samples total, including $\approx 35$
-    uterine or $\approx 60$ placenta) in each of the groups chosen at
-    random, with the remaining samples making up a testing set
-    ($\approx 820$ samples).
-  \end{frame}  
+    \cite{Karatzoglou2004:kernlab}
+  \item 10 cycles of 10 repeats and a
+    tune length of 8
+    
+  \item training set representing $\approx 75\%$ of the samples
+    ($\approx 2450$ samples total, including $\approx 35$ uterine or
+    $\approx 60$ placenta) in each of the groups chosen at random,
+  \item remaining samples making up a testing set ($\approx 820$
+    samples)
+  \end{itemize}
+\end{frame}  
 
   
 \begin{frame}{Placenta and Uterus SVM}
@@ -425,13 +421,20 @@ legend("bottomright",
 \subsection{Identification of tissue in reduced reads}
 
 \begin{frame}{Reducing Reads}
+  \begin{itemize}
+  \item Reads sub-sampled from each sample 
+  \item Weighted by the FPKM measured
+  \item Run using the same trained SVM shown previously
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{Identification of tissue in reduced reads}
-  \centering
-<<placenta.roc.reduced.curve,fig.width=8,fig.height=4,out.height="0.6\\textheight",echo=FALSE>>=
-layout(matrix(1:2,1,2))
-for (a in c("placenta","uterus")) {
+
+\begin{columns}
+\column{0.6\textwidth}
+<<placenta.roc.reduced.curve,fig.width=6,fig.height=6,out.height="0.8\\textheight",echo=FALSE>>=
+#layout(matrix(1:2,1,2))
+for (a in c("placenta")) {
 pl.roc.obj1 <- 
     plot.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.1000.reads"]][,"actual"])-1,
              as.numeric(predictions.caret.svm.reduced[[a]][["testing.1000.reads"]][,a]),
@@ -462,19 +465,59 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
        lwd=2)
 }
 @ 
-\captionof{figure}{\ac{ROC} curve of reduced reads in Placenta and
-  Uterus samples with the indicated number of total reads. Reads were
-  reduced by sampling reads for each sample weighted by the FPKM
-  measured for each sample, and run using the same trained SVM
-  depicted in Figure \ref{fig:plac_ut_full_roc}. %
+\column{0.4\textwidth}
+\captionof{figure}{\ac{ROC} curve of reduced reads in Placenta with the indicated number of total reads.  %
   % 
   The placenta \ac{SVM} is fairly accurate at distinguishing between
   samples of placental origin and non-placental origin even when the
-  number of reads is very low (10). The uterus \ac{SVM} requires many
-  more reads in order to achieve similar accuracy. This is likely due
-  to the much smaller number of uterus specific genes in comparison to
-  placenta.}
+  number of reads is very low (10).}
+\end{columns}
+\end{frame}
 
+\begin{frame}{Reduced Reads: Uterus}
+\begin{columns}
+\column{0.6\textwidth}
+<<uterus.roc.reduced.curve,fig.width=6,fig.height=6,out.height="0.8\\textheight",echo=FALSE>>=
+# layout(matrix(1:2,1,2))
+for (a in c("uterus")) {
+pl.roc.obj1 <- 
+    plot.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.1000.reads"]][,"actual"])-1,
+             as.numeric(predictions.caret.svm.reduced[[a]][["testing.1000.reads"]][,a]),
+             percent=TRUE,
+             ## main="Training vs Testing set for Uterus",
+             col="#002058"
+             )
+pl.roc.obj2 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.5000.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[[a]][["testing.5000.reads"]][,a]),
+              percent=TRUE,
+              col="#E87722")
+pl.roc.obj3 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.10.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[[a]][["testing.10.reads"]][,a]),
+              percent=TRUE,
+              col="green")
+pl.roc.obj4 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[["placenta"]][["testing.1.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[["placenta"]][["testing.1.reads"]][,"placenta"]),
+              percent=TRUE,
+              col="brown")
+# testobj <- roc.test(rocobj1, rocobj2)
+# text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
+
+legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads","1000 Reads", "5000 Reads")),
+       col=c("brown","green","#002058", "#E87722"),
+       lwd=2)
+}
+@ 
+\column{0.4\textwidth}
+\captionof{figure}{\ac{ROC} curve of reduced reads in Placenta and
+  Uterus samples with the indicated number of total reads.  %
+  % 
+  The uterus \ac{SVM} requires many more reads in order to achieve
+  similar accuracy. This is likely due to the much smaller number of
+  uterus specific genes in comparison to placenta.}
+\end{columns}
 \end{frame}
 
 \section{Conclusions}
@@ -498,14 +541,19 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
   \end{itemize}
 \end{frame}
 
-\section*{Acknowledgements}
+\section*{Acknowledgments}
 
-\begin{frame}
-  The code and underlying data for this poster can be found at
-\begin{center}
-\qrcode[padding]{http://dla2.us/p/em2015}
-\url{http://dla2.us/p/em2015}
-\end{center}
+\begin{frame}{Acknowledgments}
+  \begin{itemize}
+  \item Derek Wildman
+  \item Monica Uddin
+  \end{itemize}
+  
+  The code and underlying data for this talk can be found at
+  \begin{center}
+    \qrcode[padding]{http://dla2.us/p/em2015}
+    \url{http://dla2.us/p/em2015}
+  \end{center}
 \end{frame}
 
 \section*{References}
@@ -518,7 +566,7 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
 \end{frame}
 
 
-\begin{frame}{Acronyms}
+\begin{frame}[plain]
   \acrodef{EV}[EV]{Extracellular Vesicle}
 \acrodef{SVM}{Support Vector Machine}
 \acrodef{ROC}{Receiver Operating Characteristic}
