@@ -1,0 +1,530 @@
+\documentclass[ignorenonframetext]{beamer}
+\usepackage{fontspec}
+\setmainfont{FreeSerif}
+\setsansfont{FreeSans}
+\setmonofont{FreeMono}
+\usepackage{url}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage[bf]{caption}
+\usepackage{rotating}
+\usepackage{wrapfig}
+\usepackage{fancybox}
+\usepackage{booktabs}
+% \usepackage{multirow}
+\usepackage{acronym}
+\usepackage{qrcode}
+\usepackage[backend=biber,natbib=true,hyperref=true,style=nature]{biblatex}
+\addbibresource{references.bib}
+% \usepackage[nomargin,inline,draft]{fixme}
+% \newcommand{\DLA}[1]{\textcolor{red}{\fxnote{DLA: #1}}}
+% \usepackage[hyperfigures,bookmarks,colorlinks,citecolor=black,filecolor=black,linkcolor=black,urlcolor=black]{hyperref}
+\usepackage{texshade}
+\usepackage{tikz}
+\usepackage{nameref}
+\usepackage{zref-xr,zref-user}
+\renewcommand*{\bibfont}{\tiny}
+
+% The textpos package is necessary to position textblocks at arbitary 
+% places on the page.  Use showboxes option to show outlines of textboxes.
+% \usepackage[absolute]{textpos}
+\usepackage[absolute,showboxes]{textpos}
+
+\usepackage{multirow}
+\usepackage{array}
+
+\mode<presentation>{ 
+  \usetheme{CambridgeUS}
+  % http://identitystandards.illinois.edu/graphicstandardsmanual/generalguidelines/colors.html
+  \definecolor{ilboldblue}{HTML}{002058}
+  \definecolor{ilboldorange}{HTML}{E87722}
+  \definecolor{ilblue}{HTML}{606EB2}
+  \definecolor{ilorange}{HTML}{D45D00}
+  \setbeamercolor{alerted text}{fg=ilboldorange}
+  \setbeamercolor*{palette primary}{fg=ilblue,bg=ilorange}
+  \setbeamercolor*{palette secondary}{fg=ilblue!20!white,bg=ilorange}
+  \setbeamercolor*{palette tertiary}{bg=ilblue,fg=ilorange}
+  \setbeamercolor*{palette quaternary}{fg=ilblue,bg=ilorange}
+  
+  \setbeamercolor*{sidebar}{fg=ilorange,bg=ilboldblue}
+  
+  \setbeamercolor*{palette sidebar primary}{fg=ilblue!10!white,bg=ilorange}
+  \setbeamercolor*{palette sidebar secondary}{fg=ilorange}
+  \setbeamercolor*{palette sidebar tertiary}{fg=ilblue}
+  \setbeamercolor*{palette sidebar quaternary}{fg=ilorange}
+  
+  % \setbeamercolor*{titlelike}{parent=palette primary}
+  \setbeamercolor{titlelike}{parent=palette primary,fg=ilboldblue,bg=ilorange}
+  \setbeamercolor{frametitle}{fg=ilboldorange,bg=ilblue!80!white}
+  \setbeamercolor{frametitle right}{fg=ilboldblue,bg=ilorange}
+  
+  \setbeamercolor*{separation line}{}
+  \setbeamercolor*{fine separation line}{}
+  \setbeamercovered{transparent}  
+  \logo{\begin{tikzpicture}% Pale figure
+      {\node[opacity=0.8]{\IfFileExists{figures/igb_wordmark.pdf}{\includegraphics[width=2cm,height=1cm,keepaspectratio]{figures/igb_wordmark}}{}%
+        };}%
+    \end{tikzpicture}}
+}
+
+\title{Identifying Extracellular Vesicles of Placenta and Uterine 
+  Origin Using RNA Expression Signatures}
+\author{Don L. Armstrong, Monica Uddin, Derek Wildman}
+\institute{Institute for Genomic Biology, Computing Genomes 
+  for Reproductive Health, University of Illinois, Urbana-Champaign}
+\subject{RNA expression}
+
+\begin{document}
+
+<<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
+opts_chunk$set(dev="cairo_pdf",out.width="\\textwidth",out.height="0.8\\textheight",out.extra="keepaspectratio")
+#opts_chunk$set(cache=TRUE, autodep=TRUE)
+options(device = function(file, width = 8, height = 7, ...) {
+  cairo_pdf(tempfile(), width = width, height = height, ...)
+})
+options(digits=2)
+library("data.table")
+library("ggplot2")
+library("reshape2")
+library("proto")
+library("grid")
+library("xtable")
+library("caret")
+library("pROC")
+
+capwords <- function(s, strict = FALSE) {
+    cap <- function(s) paste(toupper(substring(s, 1, 1)),
+                             {s <- substring(s, 2); if(strict) tolower(s) else s},
+                             sep = "", collapse = " " )
+    sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
+}
+@ 
+
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced")))>>=
+for (a in paste0("../tissue_specific_expression/",
+                 c("tissue_specific_markers",
+                   "interesting_gene_reads_wide",
+                   "combined_star_logs",
+                   "svm_test_results",
+                   "svm_test_results_reduced"
+                   ))) {
+    load(a)
+}
+tissue.specific.genes <- data.table(tissue.specific.genes)
+@ 
+
+
+\IfFileExists{figures/relevant_xkcd.png}{\frame[plain]{\centering \includegraphics[width=\textwidth,height=0.8\textheight,keepaspectratio]{figures/relevant_xkcd.png}
+
+    \url{https://xkcd.com/1217/}}}
+
+\frame[plain]{\titlepage}
+
+<<specific.markers.plot.function,echo=FALSE,results="hide",warning=FALSE>>=
+specific.markers.plot <- function(tissue.name,genes) {
+    setkey(interesting.gene.reads.wide,"gene_short_name")
+    if (missing(genes))
+        genes <- as.character(tissue.specific.genes[tissue==tissue.name,gene])
+    interesting.tissues <- 
+        colnames(interesting.gene.reads.wide)[
+         apply(interesting.gene.reads.wide[genes,-(1:2),with=FALSE],1,
+                             function(x){order(-x)[2]+2})]
+    
+    interesting.tissues <- 
+        c("gene_short_name",tissue.name,unique(interesting.tissues))
+    
+    tissue.specific.gene.reads <- 
+        data.table(melt(interesting.gene.reads.wide[genes,interesting.tissues,with=FALSE],
+                        id="gene_short_name",
+                        variable.name="tissue",
+                        value.name="FPKM"
+                        ))
+    tissue.specific.gene.reads[,`log_2(FPKM)`:=log2(FPKM+1)]
+    gene.levels <- 
+        unique(as.character(tissue.specific.genes[tissue==tissue.name][order(specificity),gene]))
+    tissue.specific.gene.reads[,gene_short_name:=factor(gene_short_name,levels=gene.levels)]
+    return(ggplot(tissue.specific.gene.reads,
+                  aes(y=gene_short_name,
+                          x=tissue))
+           + geom_tile(aes(fill=`log_2(FPKM)`))
+           + scale_fill_gradient(limits=c(0,17),
+                                 low="white",
+                                 high="#002058",
+                                 guide=guide_colourbar(title=expression(log[2](FPKM))))
+           + scale_x_discrete("", expand = c(0, 0))
+           + scale_y_discrete("", expand = c(0, 0))
+           + theme_grey(base_size=14)
+           + theme(legend.position = "top",
+                   axis.ticks = element_blank(),
+                   panel.grid=element_blank(),
+                   panel.border=element_blank(),
+                   panel.background=element_blank(),
+                   plot.background=element_blank(),
+                   plot.margin=unit(c(1,1,1,1),"mm"),
+                   axis.text.x = element_text(angle = 30, hjust = 1, vjust=1))
+           )
+}
+@ 
+
+
+\section{Introduction}
+
+\begin{frame}{Introduction: \acsp{EV}}
+  \acp{EV} are
+  \begin{itemize}
+  \item small (40-1000nm) compartments
+  \item found in blood, saliva, and urine. 
+  \item originate from the plasma membrane or multivesicular endosome
+  \item from many cell types
+  \item contain proteins, lipids, mRNA, miRNA, and other ncRNAs.
+  \item \alert{remote sensor of the transcriptome of inaccessible tissues}
+  \end{itemize}
+\end{frame}
+  
+\subsection{Identifying source tissue of \acp{EV}}
+
+\begin{frame}{Identifying source tissue of \acp{EV}}
+  
+  One requirement for remotely sensing the transcriptome is
+  identifying the source tissue of a specific \ac{EV}. To identify the
+  source tissue of a specific \ac{EV}, we have identified miRNA and
+  mRNA markers which are characteristic of multiple organs and tissues
+  from existing publicly-available RNAseq transcriptomes by
+  calculating a tissue specificity index.
+    
+  The tissue specificity index for gene $g$ ($\tau_g$) is
+    
+  \begin{equation}
+    \tau_g = \frac{\sum_{i=1}^{i=N} \left(1-\frac{X_{i,g}}{\mathrm{max}(X_g)}\right)}{N-1}
+  \end{equation}
+  \label{eq:tissue_specificity_index}
+  
+  where $N$ is the number of tissues, $X_{i,g}$ is the mean expression
+  of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is the maximal
+  expression of gene $g$ across all tissues.
+    
+ \end{frame}
+  
+ \begin{frame}{\ac{SVM}}
+    We also trained a multiclass \ac{SVM} to accurately identify the
+    tissue of origin, and present the results of the identification of
+    reads from uterine and placental origin here. Tables showing
+    tissue specific genes from all %
+    %
+    \Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} %
+    % 
+    tissues can be found on \url{http://dla2.us/p/em2015}.
+    
+    
+%     Our approach identified MIR1914, MIR126, SNORD12, and SNORD5 as
+%     uterus specific. CGB, LGALS13, and members of the PSG family were
+%     identified as placenta specific. The accuracy of the classifier
+%     was verified using RNAseq transcriptome data not in the training
+%     set. We show the applicability of the classifier to simulated EVs
+%     by down sampling reads to $10^5$ reads and biasing the reads to
+%     account for preferential association of RNA motifs with EV
+%     packaging machinery. When coupled with single-EV sequencing, our
+%     classifier enables clinicians to monitor disease-specific markers
+%     over the course of treatment without biopsies, increasing the
+%     ability of clinicians to adapt treatment modalities to the
+%     individual patient. 
+\end{frame}
+  
+\section{Methods}
+\begin{frame}{Methods}
+  \begin{itemize}
+  % 
+  \item \Sexpr{star.logs[grepl("Number of input reads",field),sum(as.numeric(value))]} %
+    %
+    RNAseq reads (\Sexpr{star.logs[grepl("Number of input reads",field),sum(as.numeric(value))]/length(star.logs[grepl("Number of input reads",field),value])} average per sample)%
+    % 
+  \item  \Sexpr{length(star.logs[grepl("Number of input reads",field),value])} %
+    % 
+    samples (supplemented with FPKMs from
+    \Sexpr{nrow(predictions.caret.svm[["uterus"]][["training"]])+
+      nrow(predictions.caret.svm[["uterus"]][["testing"]]) -
+      length(star.logs[grepl("Number of input reads",field),value])} %
+    %
+    additional samples without raw data in the \ac{SRA})
+    % 
+
+  \item  \Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} %
+    different tissues 
+    
+  \item Samples from Roadmap Epigenomics
+    \cite{Bernstein.ea2010:NIHRoadmapEpigenomicsMapping}, GTEx
+    \cite{Gtexconsortium.2015:Thegenotypetissueexpression},
+    uterine (GSE50599,
+    \cite{Chan.ea2014:Assessmentofmyometrialtranscriptome}) and
+    placenta (GSE66622,
+    \cite{Hughes.ea2015:Evaluatingintra-andinter-individual})
+  \item aligned to GRCh38 using STAR
+    \cite{Dobin.ea2013:STARultrafastuniversalRNA-seq}
+  \item called using Cufflinks 2 v2.0.10
+    \cite{Trapnell.ea2009:TopHatdiscoveringsplicejunctions}.
+    
+  \item Mean uniquely mapped reads: %
+    \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value])))}\%
+  \item Mean total mapping percentage: %
+      \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value]))+as.numeric(gsub("%","",star.logs[field=="% of reads mapped to multiple loci",value])))}\%.
+    % 
+      \item RPKMs from publicly available result files were used for
+        samples where reads were not present in SRA.
+   \end{itemize}
+      
+\end{frame}
+
+\section{Genes Characteristic of Uterus}
+
+% <<uterus.specific.markers.table,results="asis",echo=FALSE>>=
+% temp <- tissue.specific.genes[tissue=="uterus",list(gene,specificity,gi.max)]
+% setorder(temp,-gi.max)
+% setnames(temp,c("Gene","Tissue Specificity","Mean Expression"))
+% print(xtable(temp,
+%              caption="Uterus specific genes",label="tab:uterus_specific_genes"),
+%       floating=FALSE,
+%       include.rownames=FALSE,
+%       )
+% rm(temp)
+% @ 
+% }
+
+\begin{frame}{Genes Characteristic of Uterus}
+\begin{columns}
+\column{0.6\textwidth}
+
+<<uterus.specific.markers.figure,fig.width=8,fig.height=8,echo=FALSE>>=
+print(specific.markers.plot("uterus")
+      + xlab("Genes Characteristic of Uterus ")
+      + ylab("Tissue"))
+@
+\column{0.4\textwidth}
+
+\captionof{figure}{Expression of genes characteristic of uterus
+  ($\tau_g \ge 0.98$) in uterus and all tissues with the second
+  highest expression for any of the uterus-characterizing genes
+  ordered by their tissue specificity. The known uterus-characterizing
+  gene PAEP and short RNAs ZNFX1-AS1\_3 (87bp) and AL356310.1 (94bp)
+  are highly characteristic of uterus.}
+\end{columns}
+\end{frame}
+
+\section{Genes Characteristic of Placenta}
+
+\begin{frame}{Genes Characteristic of Placenta}
+% <<placenta.specific.markers.table,results="asis",echo=FALSE>>=
+% temp <- tissue.specific.genes[tissue=="placenta" & gi.max >= 1000,
+%                               list(gene,specificity,gi.max)]
+% setorder(temp,-gi.max)
+% setnames(temp,c("Gene","Tissue Specificity","Mean Expression"))
+% print(xtable(temp,
+%              caption="Placenta specific genes",label="tab:placenta_specific_genes"),
+%       floating=FALSE,
+%       include.rownames=FALSE,
+%       )
+% rm(temp)
+% @ 
+  
+\begin{columns}
+\column{0.6\textwidth}
+<<placenta.specific.markers.figure,fig.width=8,fig.height=8,echo=FALSE>>=
+print(specific.markers.plot("placenta",
+                            genes=as.character(tissue.specific.genes[tissue=="placenta" & 
+                                                                         gi.max >= 1024
+                               ,gene]))
+      + xlab("Genes Characteristic of Placenta")
+      + ylab("Tissue"))
+@
+
+\column{0.4\textwidth}
+\captionof{figure}{Expression of genes characteristic of placenta
+  ($\tau_g \ge 0.98$) with high expression ($\mathrm{FPKM} \ge 1024$)
+  in placenta and all tissues with the second highest expression for
+  any placenta-characterizing gene ordered by their specificity to
+  placenta. The previously known placenta-characterizing PSG genes and
+  CSH genes are nearly unique to placenta and the short RNAs mir-126,
+  mir-622, and PAPPA-AS1 are less so.}
+\end{columns}
+\end{frame}
+
+
+\section{SVM to distinguish tissues}
+
+  % Describe SVM approach
+    
+  % Figure showing the samples
+  
+  % Ability to identify placenta
+
+  % Ability to identify uterus
+
+\begin{frame}{Generating SVM}
+  The \ac{SVM} was generated using caret
+    \cite{Kuhn2008:Buildingpredictivemodelsinr} and svmRadial
+    \cite{Karatzoglou2004:kernlab} with 10 cycles of 10 repeats and a
+    tune length of 8 with a training set representing $\approx 75\%$ of the
+    samples ($\approx 2450$ samples total, including $\approx 35$
+    uterine or $\approx 60$ placenta) in each of the groups chosen at
+    random, with the remaining samples making up a testing set
+    ($\approx 820$ samples).
+  \end{frame}  
+
+  
+\begin{frame}{Placenta and Uterus SVM}
+  \centering
+<<placenta.roc.curve,fig.width=8,fig.height=4,out.height="0.6\\textheight",echo=FALSE>>=
+layout(matrix(1:2,1,2))
+pl.roc.obj1 <- 
+    plot.roc(as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"actual"])-1,
+             as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"placenta"]),
+             percent=TRUE,
+             ## main="Training vs Testing set for Uterus",
+             col="#002058"
+             )
+pl.roc.obj2 <- 
+    lines.roc(as.numeric(predictions.caret.svm[["placenta"]][["training"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm[["placenta"]][["training"]][,"placenta"]),
+              percent=TRUE,
+              col="#E87722")
+# testobj <- roc.test(rocobj1, rocobj2)
+# text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
+
+legend("bottomright",
+       legend=c("Placenta Testing Set", "Placenta Training Set"),
+       col=c("#002058", "#E87722"),
+       lwd=2)
+
+ut.roc.obj1 <- 
+    plot.roc(as.numeric(predictions.caret.svm[["uterus"]][["testing"]][,"actual"])-1,
+             as.numeric(predictions.caret.svm[["uterus"]][["testing"]][,"uterus"]),
+             percent=TRUE,
+             ## main="Training vs Testing set for Uterus",
+             col="#002058"
+             )
+ut.roc.obj2 <- 
+    lines.roc(as.numeric(predictions.caret.svm[["uterus"]][["training"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm[["uterus"]][["training"]][,"uterus"]),
+              percent=TRUE,
+              col="#E87722")
+# testobj <- roc.test(rocobj1, rocobj2)
+# text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
+
+legend("bottomright",
+       legend=c("Uterus Testing Set", "Uterus Training Set"),
+       col=c("#002058", "#E87722"),
+       lwd=2)
+@ 
+\captionof{figure}{\ac{ROC} curve of the placenta \ac{SVM} (left) and
+  uterus \ac{SVM} right) . Both \ac{SVM} are highly effective at
+  distinguishing between samples of uterus origin and non-uterus
+  origin.}
+\label{fig:plac_ut_full_roc}
+\end{frame}
+
+
+\subsection{Identification of tissue in reduced reads}
+
+\begin{frame}{Reducing Reads}
+\end{frame}
+
+\begin{frame}{Identification of tissue in reduced reads}
+  \centering
+<<placenta.roc.reduced.curve,fig.width=8,fig.height=4,out.height="0.6\\textheight",echo=FALSE>>=
+layout(matrix(1:2,1,2))
+for (a in c("placenta","uterus")) {
+pl.roc.obj1 <- 
+    plot.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.1000.reads"]][,"actual"])-1,
+             as.numeric(predictions.caret.svm.reduced[[a]][["testing.1000.reads"]][,a]),
+             percent=TRUE,
+             ## main="Training vs Testing set for Uterus",
+             col="#002058"
+             )
+pl.roc.obj2 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.5000.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[[a]][["testing.5000.reads"]][,a]),
+              percent=TRUE,
+              col="#E87722")
+pl.roc.obj3 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[[a]][["testing.10.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[[a]][["testing.10.reads"]][,a]),
+              percent=TRUE,
+              col="green")
+pl.roc.obj4 <- 
+    lines.roc(as.numeric(predictions.caret.svm.reduced[["placenta"]][["testing.1.reads"]][,"actual"])-1,
+              as.numeric(predictions.caret.svm.reduced[["placenta"]][["testing.1.reads"]][,"placenta"]),
+              percent=TRUE,
+              col="brown")
+# testobj <- roc.test(rocobj1, rocobj2)
+# text(50, 50, labels=paste("p-value =", format.pval(testobj$p.value)), adj=c(0, .5))
+
+legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads","1000 Reads", "5000 Reads")),
+       col=c("brown","green","#002058", "#E87722"),
+       lwd=2)
+}
+@ 
+\captionof{figure}{\ac{ROC} curve of reduced reads in Placenta and
+  Uterus samples with the indicated number of total reads. Reads were
+  reduced by sampling reads for each sample weighted by the FPKM
+  measured for each sample, and run using the same trained SVM
+  depicted in Figure \ref{fig:plac_ut_full_roc}. %
+  % 
+  The placenta \ac{SVM} is fairly accurate at distinguishing between
+  samples of placental origin and non-placental origin even when the
+  number of reads is very low (10). The uterus \ac{SVM} requires many
+  more reads in order to achieve similar accuracy. This is likely due
+  to the much smaller number of uterus specific genes in comparison to
+  placenta.}
+
+\end{frame}
+
+\section{Conclusions}
+
+\begin{frame}{Conclusions}
+  \begin{itemize}
+  \item Pregnancy-specific glycoproteins (PSG1, 2, 3 et al.) are
+    characteristic of placental tissues, and PAEP is characteristic of
+    uterus, as previously described.
+%   \item Numerous Long-noncoding RNA and smaller RNAs are specific to uterus and placenta
+  \item \ac{SVM} are able to accurately identify the tissue of origin
+    for uterus and placenta.
+  \item Very few sequenced reads are required to accurately identify
+    tissues of Placental origin. We are able to detect 100\% of the
+    placenta tissues with 80\% specificity with just 10 reads.
+  \item We can easily identify exosomes originating from the placenta,
+    as even the smallest exosomes can contain 70 RNA molecules
+    \cite{Li.ea2014:AnalysisofRNAcontent}.
+  \item Non-maternal variants may also be able to distinguish between
+    placental reads and maternal reads.
+  \end{itemize}
+\end{frame}
+
+\section*{Acknowledgements}
+
+\begin{frame}
+  The code and underlying data for this poster can be found at
+\begin{center}
+\qrcode[padding]{http://dla2.us/p/em2015}
+\url{http://dla2.us/p/em2015}
+\end{center}
+\end{frame}
+
+\section*{References}
+
+\begin{frame}[plain]{References}
+  \begin{center}
+    \mbox{}\vspace{-\baselineskip}
+    \printbibliography[heading=none]
+  \end{center}
+\end{frame}
+
+
+\begin{frame}{Acronyms}
+  \acrodef{EV}[EV]{Extracellular Vesicle}
+\acrodef{SVM}{Support Vector Machine}
+\acrodef{ROC}{Receiver Operating Characteristic}
+\acrodef{KNN}{K Nearest Neighbors}
+\acrodef{SRA}{Sequence Read Archive}
+
+\end{frame}
+
+\end{document}

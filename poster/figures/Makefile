@@ -18,3 +18,5 @@ uofi_mark.pdf:
 	epstopdf --outfile=$@ uclogo_1867_horz_bold/pc/uclogo_1867_horz_bold.eps
 	rm -rf uclogo_1867_horz_bold
 
+relevant_xkcd.png:
+	wget -O $@ "http://imgs.xkcd.com/comics/cells.png"
