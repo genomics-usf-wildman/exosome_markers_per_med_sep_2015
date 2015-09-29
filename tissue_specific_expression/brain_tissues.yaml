@@ -1,0 +1,106 @@
+tissues:
+  - name: adrenal gland
+    brain: FALSE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: amygdala
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: anterior cingulate cortex (ba24)
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: TRUE
+    hippocampus: FALSE
+  - name: brain germinal matrix
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE    
+    hippocampus: FALSE
+  - name: brain hippocampus middle
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: TRUE
+  - name: caudate (basal ganglia)
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: cerebellar hemisphere
+    brain: TRUE
+    cerebellum: TRUE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: cerebellum
+    brain: TRUE
+    cerebellum: TRUE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: cortex
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: TRUE
+    hippocampus: FALSE
+  - name: fetal brain female
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: fetal spinal cord
+    brain: FALSE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: frontal cortex (ba9)
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: TRUE
+    hippocampus: FALSE
+  - name: hippocampus
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: TRUE
+  - name: hypothalamus
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: neurosphere cultured cells cortex derived
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: TRUE
+    hippocampus: FALSE
+  - name: neurosphere cultured cells ganglionic eminence derived
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: nucleus accumbens (basal ganglia)
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: pituitary
+    brain: FALSE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: putamen (basal ganglia)
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: spinal cord (cervical c-1)
+    brain: FALSE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE
+  - name: substantia nigra
+    brain: TRUE
+    cerebellum: FALSE
+    cortex: FALSE
+    hippocampus: FALSE

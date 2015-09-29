@@ -71,6 +71,12 @@ categorized_samples: R/categorize_samples.R chosen_samples \
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
+
+brain_specific_markers: R/brain_specific.R categorized_samples combined_read_counts \
+	brain_tissues.yaml
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
 tissue_specific_markers: R/tissue_specific_expression.R interesting_gene_reads_wide \
 	interesting_isoform_reads_wide
 	$(MODULE) load R/3.2.0; \
@@ -78,6 +84,9 @@ tissue_specific_markers: R/tissue_specific_expression.R interesting_gene_reads_w
 
 tissue_specific_markers.txt: tissue_specific_markers ../common_r/array_to_text.R
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< tissue.specific.genes $@
+
+brain_specific_markers.txt: brain_specific_markers ../common_r/array_to_text.R
+	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< brain.tissue.specific.genes $@
 
 interesting_gene_reads: R/subset_reads.R categorized_samples \
 	combined_read_counts additional_interesting_genes.txt
