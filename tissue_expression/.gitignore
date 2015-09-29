@@ -13,3 +13,9 @@ GTEx_Data_V4_Annotations_SampleAttributesDS.txt
 57epigenomes.RPKM.intronic.pc.gz 57epigenomes.RPKM.nc.gz 57epigenomes.RPKM.pc.gz 57epigenomes.RPKM.rb.gz
 EG.name.txt
 Ensembl_v65.Gencode_v10.ENSG.gene_info
+57epigenomes.RPKM.nc.gz
+57epigenomes.RPKM.pc.gz
+57epigenomes.RPKM.rb.gz
+combined_isoform_reads
+combined_read_counts
+combined_star_logs
