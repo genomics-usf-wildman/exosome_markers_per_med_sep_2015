@@ -1,9 +1,4 @@
 tissues:
-  - name: adrenal gland
-    brain: FALSE
-    cerebellum: FALSE
-    cortex: FALSE
-    hippocampus: FALSE
   - name: amygdala
     brain: TRUE
     cerebellum: FALSE
