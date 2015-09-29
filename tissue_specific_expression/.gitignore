@@ -5,3 +5,16 @@ GTEx_Data_V4_Annotations_SampleAttributesDS.txt
 tissue_specific_markers
 interesting_gene_reads
 interesting_isoform_reads
+brain_specific_markers
+brain_specific_markers.txt
+knn_classification
+lds_classification
+svm_classification
+interesting_gene_reads_wide
+interesting_isoform_reads_wide
+combined_isoform_reads
+combined_read_counts
+combined_star_logs
+EG.name.txt
+svm_test_results
+tissue_specific_markers.txt
