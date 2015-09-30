@@ -125,6 +125,23 @@ for (tissue in colnames(brain.tissues)[-1]) {
 brain.tissue.specific.genes <-
     rbindlist(brain.tissue.specific.genes)
 
+### identify genes which are highly expressed in brain tissues even if
+### they are not specific
+
+brain.reads <-
+    gene.reads.wide[,c("gene_short_name","tracking_id",brain.tissues[,name]),
+                    with=FALSE]
+brain.reads[,max:=apply(brain.reads[,-(1:2),with=FALSE],1,max)]
+
+brain.highly.expressed.genes <-
+    gene.reads.wide[sort(unique(as.vector(apply(gene.reads.wide[,brain.tissues[,name],
+                                                                with=FALSE],
+                                                2,
+                                                function(x){order(-x)[1:100]})))),
+                    c("gene_short_name","tracking_id",brain.tissues[,name]),with=FALSE]
+
+brain.highly.expressed.genes[,max:=apply(brain.highly.expressed.genes[,-(1:2),with=FALSE],1,max)]
+
 save(brain.tissue.specific.genes,
      file=args[length(args)])
 

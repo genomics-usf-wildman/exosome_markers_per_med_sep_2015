@@ -82,11 +82,18 @@ tissue_specific_markers: R/tissue_specific_expression.R interesting_gene_reads_w
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
+housekeeping_genes: R/housekeeping_genes.R categorized_samples combined_read_counts
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
 tissue_specific_markers.txt: tissue_specific_markers ../common_r/array_to_text.R
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< tissue.specific.genes $@
 
 brain_specific_markers.txt: brain_specific_markers ../common_r/array_to_text.R
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< brain.tissue.specific.genes $@
+
+housekeeping_genes.txt: housekeeping_genes ../common_r/array_to_text.R
+	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< housekeeping.genes $@
 
 interesting_gene_reads: R/subset_reads.R categorized_samples \
 	combined_read_counts additional_interesting_genes.txt
@@ -97,6 +104,31 @@ interesting_isoform_reads: R/subset_reads.R categorized_samples \
 	combined_isoform_reads additional_interesting_genes.txt
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+housekeeping_genes_eisenberg_2003.html:
+	wget -O $@ "https://web.archive.org/web/20070805203436/http://compugen.co.il/supp_info/Housekeeping_genes.html"
+
+.ONESHELL:
+housekeeping_genes_eisenberg_2003.txt: housekeeping_genes_eisenberg_2003.html
+	perl -0777 -ne 'while (m/\*?(NM_\d+)<[^>]+>(?:\&nbsp\;)*\s*<[^>]+>\s*([^\<]*)</msg) { 
+		my $$nm = $$1;
+		my $$gene = $$2;
+	 	$$nm =~ s/[\r\n]+/ /g;
+	 	$$gene =~ s/[\r\n]+/ /g;
+		my ($$name,$$long) = $$gene =~ m/(.+)\s+\(([^\)]+)\),/; 
+	    print qq($$nm\n); }' $< > $@
+
+housekeeping_genes_eisenberg_2013.txt:
+	wget -O $@ "http://www.tau.ac.il/~elieis/HKG/HK_genes.txt"
+
+housekeeping_genes_eisenberg_2013_annotated.txt: R/annotate_nm.R housekeeping_genes_eisenberg_2013.txt
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+housekeeping_genes_eisenberg_2003_annotated.txt: R/annotate_nm.R housekeeping_genes_eisenberg_2003.txt
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
 
 %_reads_wide: %_reads R/wide_reads.R 
 	$(MODULE) load R/3.2.0; \
