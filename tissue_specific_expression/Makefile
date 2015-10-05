@@ -73,7 +73,8 @@ categorized_samples: R/categorize_samples.R chosen_samples \
 
 
 brain_specific_markers: R/brain_specific.R categorized_samples combined_read_counts \
-	brain_tissues.yaml
+	brain_tissues.yaml \
+	housekeeping_genes
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
@@ -128,6 +129,14 @@ housekeeping_genes_eisenberg_2013_annotated.txt: R/annotate_nm.R housekeeping_ge
 housekeeping_genes_eisenberg_2003_annotated.txt: R/annotate_nm.R housekeeping_genes_eisenberg_2003.txt
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+housekeeping_genes_superset: R/housekeeping_genes_superset.R housekeeping_genes housekeeping_genes_eisenberg_2013_annotated.txt
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+housekeeping_genes_superset.txt: housekeeping_genes_superset ../common_r/array_to_text.R
+	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< housekeeping.genes.superset $@
+
 
 
 %_reads_wide: %_reads R/wide_reads.R 

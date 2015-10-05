@@ -48,9 +48,16 @@ housekeeping.genes <-
 housekeeping.genes[,mean:=apply(housekeeping.genes[,-(1:2),with=FALSE],1,mean)]
 housekeeping.genes[,percentage:=apply(housekeeping.genes[,-(1:2),with=FALSE] >= 50,1,mean)]
 housekeeping.genes[,percentage.10:=apply(housekeeping.genes[,-(1:2),with=FALSE] >= 10,1,mean)]
+housekeeping.genes[,percentage.1:=apply(housekeeping.genes[,-(1:2),with=FALSE] >= 1,1,mean)]
 
 housekeeping.genes <-
-    housekeeping.genes[order(-mean),list(gene_short_name,tracking_id,mean,percentage,percentage.10)]
+    housekeeping.genes[order(-mean),list(gene_short_name,tracking_id,mean,
+                                         percentage,percentage.10,percentage.1)]
+
+housekeeping.genes <-
+    housekeeping.genes[percentage >= 0.6 |
+                           (grepl("^MT-",gene_short_name) & mean > 100)
+                      ,]
 
 save(housekeeping.genes,
      file=args[length(args)])

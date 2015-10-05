@@ -5,6 +5,7 @@ library("yaml")
 args <- c("categorized_samples",
           "combined_read_counts",
           "brain_tissues.yaml",
+          "housekeeping_genes",
           "brain_specific_markers")
 
 args <- commandArgs(trailingOnly=TRUE)
@@ -13,6 +14,10 @@ args <- commandArgs(trailingOnly=TRUE)
 ### generating new tissue super-sets here.
 load(args[1])
 load(args[2])
+### housekeeping_genes
+load(args[4])
+
+hk.g.tracking <- housekeeping.genes[,tracking_id]
 
 setkey(categorized.samples,"SRX")
 
@@ -137,11 +142,16 @@ brain.highly.expressed.genes <-
     gene.reads.wide[sort(unique(as.vector(apply(gene.reads.wide[,brain.tissues[,name],
                                                                 with=FALSE],
                                                 2,
-                                                function(x){order(-x)[1:100]})))),
+                                                function(x){order(-x)[1:500]})))),
                     c("gene_short_name","tracking_id",brain.tissues[,name]),with=FALSE]
 
 brain.highly.expressed.genes[,max:=apply(brain.highly.expressed.genes[,-(1:2),with=FALSE],1,max)]
 
+
+brain.highly.expressed.genes <-
+    brain.highly.expressed.genes[!(tracking_id %in% hk.g.tracking),]
+
 save(brain.tissue.specific.genes,
+     brain.highly.expressed.genes,
      file=args[length(args)])
 
