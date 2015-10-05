@@ -30,7 +30,7 @@ for (file in star.log.files) {
     star.log$value <- gsub("\\t","",star.log$value)
     star.log$field <- gsub("(^\\s+|\\s+$)","",star.log$field)
     star.log$srx <- srx.accession
-    star.logs[[srx.accession]] <- data.table(star.log)[!grepl(":",field),]
+    star.logs[[srx.accession]] <- data.table(star.log)[!grepl(":$",field),]
     i <- i + 1
     setTxtProgressBar(pb,i)
 }
