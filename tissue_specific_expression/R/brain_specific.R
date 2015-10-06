@@ -5,7 +5,7 @@ library("yaml")
 args <- c("categorized_samples",
           "combined_read_counts",
           "brain_tissues.yaml",
-          "housekeeping_genes",
+          "housekeeping_genes_superset",
           "brain_specific_markers")
 
 args <- commandArgs(trailingOnly=TRUE)
@@ -17,7 +17,7 @@ load(args[2])
 ### housekeeping_genes
 load(args[4])
 
-hk.g.tracking <- housekeeping.genes[,tracking_id]
+hk.g.tracking <- housekeeping.genes.superset[,tracking_id]
 
 setkey(categorized.samples,"SRX")
 

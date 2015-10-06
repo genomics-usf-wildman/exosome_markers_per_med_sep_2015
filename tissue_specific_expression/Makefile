@@ -74,7 +74,7 @@ categorized_samples: R/categorize_samples.R chosen_samples \
 
 brain_specific_markers: R/brain_specific.R categorized_samples combined_read_counts \
 	brain_tissues.yaml \
-	housekeeping_genes
+	housekeeping_genes_superset
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
@@ -92,6 +92,9 @@ tissue_specific_markers.txt: tissue_specific_markers ../common_r/array_to_text.R
 
 brain_specific_markers.txt: brain_specific_markers ../common_r/array_to_text.R
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< brain.tissue.specific.genes $@
+
+brain_highly_expressed.txt: brain_specific_markers ../common_r/array_to_text.R
+	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< brain.highly.expressed.genes $@
 
 housekeeping_genes.txt: housekeeping_genes ../common_r/array_to_text.R
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< housekeeping.genes $@
