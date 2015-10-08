@@ -1,6 +1,7 @@
 library("data.table")
 library("reshape2")
 library("yaml")
+library("parallel")
 
 args <- c("categorized_samples",
           "combined_read_counts",
@@ -33,6 +34,33 @@ gene.reads.wide <-
                      value.var="FPKM"
                      ))
 
+gene.reads.wide[,name_or_tracking:=ifelse(is.na(gene_short_name),tracking_id,gene_short_name)]
+setkey(gene.reads.wide,name_or_tracking)
+
+housekeeping.genes <- list()
+
+housekeeping.gene.levels <- function(gene) {
+    gene.expression <-
+        apply(gene.reads.wide[gene,-(c(1:2,ncol(gene.reads.wide))),
+                              with=FALSE],
+              2,sum)
+    return(data.table(
+        gene=gene,
+        tracking_id=gene.reads.wide[gene,tracking_id][1],
+        mean=mean(gene.expression),
+        percentage=mean(gene.expression>50),
+        percentage.10=mean(gene.expression>10),
+        percentage.1=mean(gene.expression>1)))
+}
+
+housekeeping.genes <-
+    mclapply(unique(gene.reads.wide[,name_or_tracking]),
+             housekeeping.gene.levels,
+             mc.cores=12)
+
+housekeeping.genes <-
+    rbindlist(housekeeping.genes)
+
 
 ### identify house keeping genes. These are genes which are expressed
 ### in pretty much every tissue. [Note that we'll have to be careful
@@ -42,22 +70,12 @@ gene.reads.wide <-
 ### which in some cases have been excluded from alignments.
 
 ### genes expressed with FPKM >= 50 in >= 60% of tissues 
-housekeeping.genes <-
-    copy(gene.reads.wide)#[apply(gene.reads.wide[,-(1:2),with=FALSE]>=50,1,mean) >= 0.60,
-                   # ]
-housekeeping.genes[,mean:=apply(housekeeping.genes[,-(1:2),with=FALSE],1,mean)]
-housekeeping.genes[,percentage:=apply(housekeeping.genes[,-(1:2),with=FALSE] >= 50,1,mean)]
-housekeeping.genes[,percentage.10:=apply(housekeeping.genes[,-(1:2),with=FALSE] >= 10,1,mean)]
-housekeeping.genes[,percentage.1:=apply(housekeeping.genes[,-(1:2),with=FALSE] >= 1,1,mean)]
-
-housekeeping.genes <-
-    housekeeping.genes[order(-mean),list(gene_short_name,tracking_id,mean,
-                                         percentage,percentage.10,percentage.1)]
 
 housekeeping.genes <-
     housekeeping.genes[percentage >= 0.6 |
-                           (grepl("^MT-",gene_short_name) & mean > 100)
+                           (grepl("^MT-",gene) & mean > 100)
                       ,]
+setnames(housekeeping.genes,"gene","gene_short_name")
 
 save(housekeeping.genes,
      file=args[length(args)])
