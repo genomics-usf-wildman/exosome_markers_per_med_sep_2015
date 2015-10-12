@@ -14,6 +14,7 @@
 % \usepackage{multirow}
 \usepackage{acronym}
 \usepackage{qrcode}
+\usepackage[absolute,overlay]{textpos}
 \usepackage[backend=biber,natbib=true,hyperref=true,style=nature]{biblatex}
 \addbibresource{references.bib}
 % \usepackage[nomargin,inline,draft]{fixme}
@@ -21,9 +22,21 @@
 % \usepackage[hyperfigures,bookmarks,colorlinks,citecolor=black,filecolor=black,linkcolor=black,urlcolor=black]{hyperref}
 \usepackage{texshade}
 \usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows.meta}
 \usepackage{nameref}
 \usepackage{zref-xr,zref-user}
 \renewcommand*{\bibfont}{\tiny}
+\usepackage{mathtools,cancel}
+
+\renewcommand{\CancelColor}{\color{red}} %change cancel color to red
+
+\makeatletter
+\let\my@cancelto\cancelto %copy over the original cancelto command
+\newcommand<>{\cancelto}[2]{\alt#3{\my@cancelto{#1}{#2}}{\mathrlap{#2}\phantom{\my@cancelto{#1}{#2}}}}
+% redefine the cancelto command, using \phantom to assure that the
+% result doesn't wiggle up and down with and without the arrow
+\makeatother
 
 % The textpos package is necessary to position textblocks at arbitary 
 % places on the page.  Use showboxes option to show outlines of textboxes.
@@ -35,34 +48,35 @@
 
 \mode<presentation>{ 
   \usetheme{CambridgeUS}
-  % http://identitystandards.illinois.edu/graphicstandardsmanual/generalguidelines/colors.html
+  \usecolortheme{crane}
+%   % http://identitystandards.illinois.edu/graphicstandardsmanual/generalguidelines/colors.html
   \definecolor{ilboldblue}{HTML}{002058}
   \definecolor{ilboldorange}{HTML}{E87722}
   \definecolor{ilblue}{HTML}{606EB2}
   \definecolor{ilorange}{HTML}{D45D00}
-  \setbeamercolor{alerted text}{fg=ilboldorange}
-  \setbeamercolor*{palette primary}{fg=ilblue,bg=ilorange}
-  \setbeamercolor*{palette secondary}{fg=ilblue!20!white,bg=ilorange}
-  \setbeamercolor*{palette tertiary}{bg=ilblue,fg=ilorange}
-  \setbeamercolor*{palette quaternary}{fg=ilblue,bg=ilorange}
-  
-  \setbeamercolor*{sidebar}{fg=ilorange,bg=ilboldblue}
-  
-  \setbeamercolor*{palette sidebar primary}{fg=ilblue!10!white,bg=ilorange}
-  \setbeamercolor*{palette sidebar secondary}{fg=ilorange}
-  \setbeamercolor*{palette sidebar tertiary}{fg=ilblue}
-  \setbeamercolor*{palette sidebar quaternary}{fg=ilorange}
-  
-  % \setbeamercolor*{titlelike}{parent=palette primary}
-  \setbeamercolor{titlelike}{parent=palette primary,fg=ilboldblue,bg=ilorange}
-  \setbeamercolor{frametitle}{fg=ilboldorange,bg=ilblue!80!white}
-  \setbeamercolor{frametitle right}{fg=ilboldblue,bg=ilorange}
-  
-  \setbeamercolor*{separation line}{}
-  \setbeamercolor*{fine separation line}{}
-  \setbeamercovered{transparent}  
+%   \setbeamercolor{alerted text}{fg=ilboldorange}
+%   \setbeamercolor*{palette primary}{fg=ilboldblue,bg=ilorange!70!white}
+%   \setbeamercolor*{palette secondary}{fg=ilboldblue,bg=ilorange!60!white}
+%   \setbeamercolor*{palette tertiary}{bg=ilblue!60!white,fg=ilboldorange}
+%   \setbeamercolor*{palette quaternary}{fg=ilboldblue,bg=ilorange!80!white}
+%   
+%   \setbeamercolor*{sidebar}{fg=ilorange,bg=ilboldblue}
+%   
+%   \setbeamercolor*{palette sidebar primary}{fg=ilblue!10!white,bg=ilorange}
+%   \setbeamercolor*{palette sidebar secondary}{fg=ilorange}
+%   \setbeamercolor*{palette sidebar tertiary}{fg=ilblue}
+%   \setbeamercolor*{palette sidebar quaternary}{fg=ilorange}
+%   
+%   % \setbeamercolor*{titlelike}{parent=palette primary}
+%   \setbeamercolor{titlelike}{parent=palette primary,fg=ilboldblue,bg=ilorange}
+%   \setbeamercolor{frametitle}{fg=ilboldorange,bg=ilblue!20!white}
+%   \setbeamercolor{frametitle right}{fg=ilboldblue,bg=ilorange}
+%   
+%   \setbeamercolor*{separation line}{}
+%   \setbeamercolor*{fine separation line}{}
+%   \setbeamercovered{transparent}  
   \logo{\begin{tikzpicture}% Pale figure
-      {\node[opacity=0.8]{\IfFileExists{figures/igb_wordmark.pdf}{\includegraphics[width=2cm,height=1cm,keepaspectratio]{figures/igb_wordmark}}{}%
+      {\node[opacity=0.734]{\IfFileExists{figures/igb_wordmark.pdf}{\includegraphics[width=2cm,height=1cm,keepaspectratio]{figures/igb_wordmark}}{}%
         };}%
     \end{tikzpicture}}
 }
@@ -73,7 +87,7 @@
 \institute[IGB]{Institute for Genomic Biology, Computing Genomes 
   for Reproductive Health, University of Illinois, Urbana-Champaign}
 \subject{RNA expression}
-
+\date{October 12, 2015}
 \begin{document}
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
@@ -91,6 +105,7 @@ library("grid")
 library("xtable")
 library("caret")
 library("pROC")
+library("sampling")
 
 capwords <- function(s, strict = FALSE) {
     cap <- function(s) paste(toupper(substring(s, 1, 1)),
@@ -204,8 +219,17 @@ specific.markers.plot <- function(tissue.name,genes) {
    of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is the maximal
    expression of gene $g$
     \end{itemize}
-  \end{enumerate}
-
+\end{enumerate}
+\only<2-4>{
+\begin{textblock*}{64mm}(32mm,0.25\textheight)
+\begin{block}{Tissue Specificity}
+  \begin{itemize}
+    \item Highly specific $\tau_g = \frac{\cancelto<3->{N-1}{\sum_{i=1}^{i=N} \left(1-\frac{X_{i,g}}{\mathrm{max}(X_g)}\right)}}{N-1} = 1$
+    \item Not specific $\tau_g = \frac{\cancelto<4->{0}{\sum_{i=1}^{i=N} \left(1-\frac{X_{i,g}}{\mathrm{max}(X_g)}\right)}}{N-1} = 0$
+    \end{itemize}
+\end{block}
+\end{textblock*}
+}
 \end{frame}
   
 \begin{frame}{Source of \acp{EV} --- Machine Learning}
@@ -223,6 +247,32 @@ specific.markers.plot <- function(tissue.name,genes) {
   
 \section{Methods}
 \begin{frame}{Methods}
+  \begin{center}
+  \begin{tikzpicture}
+    [rawreads/.style={rectangle,rounded corners=2mm,draw=ilblue!90!white,fill=ilblue!40!white,inner sep=2pt,minimum size=8mm,thick},
+    processing/.style={rectangle,rounded corners=2mm,draw=ilblue!90!white,fill=ilboldblue!40!white,inner sep=2pt,minimum size=8mm,thick},
+    arrow/.style={->,shorten >=1pt,>=stealth,thick},
+    tissues/.style={rectangle,rounded corners=2mm,draw=ilorange!90!white,fill=ilorange!40!white,inner sep=2pt,minimum size=8mm,thick}]
+    \node[tissues] (tissues) {\Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))} tissues};
+    \node[processing] (star) [above left=of tissues] {STAR+Cufflinks};
+    \node[processing] (fpkm) [above right=of tissues] {FPKMs published};
+    \node[rawreads] (samples) [above=of star] {\Sexpr{length(star.logs[grepl("Number of input reads",field),value])} samples in SRA};
+    \node[rawreads] (samples noraw) [above=of fpkm] {\Sexpr{nrow(predictions.caret.svm[["uterus"]][["training"]])+
+        nrow(predictions.caret.svm[["uterus"]][["testing"]]) -
+        length(star.logs[grepl("Number of input reads",field),value])} samples not in SRA};
+    \node[processing] (matrix) [below=of tissues] {FPKMs of 63967 genes $\times$ \Sexpr{nrow(predictions.caret.svm[["uterus"]][["training"]])+
+        nrow(predictions.caret.svm[["uterus"]][["testing"]])} samples};
+    \draw[arrow] (samples)--(star);
+    \draw[arrow] (star)--(tissues);
+    \draw[arrow] (samples noraw)--(fpkm);
+    \draw[arrow] (fpkm)--(tissues);
+    \draw[arrow] (tissues)--(matrix);
+  \end{tikzpicture}
+\end{center}
+\end{frame}
+
+
+\begin{frame}<beamer:0>{Methods}
   \begin{itemize}
   % 
   \item \Sexpr{star.logs[grepl("Number of input reads",field),sum(as.numeric(value))]} %
@@ -282,21 +332,21 @@ specific.markers.plot <- function(tissue.name,genes) {
 
 \begin{frame}{Genes Characteristic of Uterus}
 \begin{columns}
-\column{0.6\textwidth}
+\column{0.7\textwidth}
 
 <<uterus.specific.markers.figure,fig.width=8,fig.height=8,echo=FALSE>>=
 print(specific.markers.plot("uterus")
       + xlab("Genes Characteristic of Uterus ")
       + ylab("Tissue"))
 @
-\column{0.4\textwidth}
+\column{0.3\textwidth}
 
 \captionof{figure}{Expression of genes characteristic of uterus
-  ($\tau_g \ge 0.98$) in uterus and all tissues with the second
-  highest expression for any of the uterus-characterizing genes
-  ordered by their tissue specificity. The known uterus-characterizing
-  gene PAEP and short RNAs ZNFX1-AS1\_3 (87bp) and AL356310.1 (94bp)
-  are highly characteristic of uterus.}
+  ($\tau_g \ge 0.98$) in uterus and tissues with second-highest
+  expression. The known uterus-characterizing gene
+  progestagen-associated endometrial protein (PAEP) and short RNAs
+  ZNFX1-AS1\_3 (87bp) and AL356310.1 (94bp) are highly characteristic
+  of uterus.}
 \end{columns}
 \end{frame}
 
@@ -330,13 +380,14 @@ print(specific.markers.plot("placenta",
 \column{0.4\textwidth}
 \captionof{figure}{Expression of genes characteristic of placenta
   ($\tau_g \ge 0.98$) with high expression ($\mathrm{FPKM} \ge 1024$)
-  in placenta and all tissues with the second highest expression for
-  any placenta-characterizing gene ordered by their specificity to
-  placenta. The previously known placenta-characterizing PSG genes and
-  CSH genes are nearly unique to placenta and the short RNAs mir-126,
-  mir-622, and PAPPA-AS1 are less so.}
+  in placenta and tissues with the second highest expression. The
+  previously known placenta-characterizing PSG genes and CSH genes are
+  nearly unique to placenta and the short RNAs mir-126, mir-622, and
+  PAPPA-AS1 are less so.}
 \end{columns}
 \end{frame}
+
+
 
 
 \section{SVM to distinguish tissues}
@@ -349,27 +400,53 @@ print(specific.markers.plot("placenta",
 
   % Ability to identify uterus
 
+\subsection{SVM Methodology}
+
 \begin{frame}{Generating SVM}
  \begin{itemize}
+ \item \ac{SVM} is a machine learning technique which finds the
+   hyperplane with the maximal margins which separates two groups
  \item \ac{SVM} was generated using caret
     \cite{Kuhn2008:Buildingpredictivemodelsinr} and svmRadial
     \cite{Karatzoglou2004:kernlab}
   \item 10 cycles of 10 repeats and a
     tune length of 8
-    
-  \item training set representing $\approx 75\%$ of the samples
-    ($\approx 2450$ samples total, including $\approx 35$ uterine or
-    $\approx 60$ placenta) in each of the groups chosen at random,
-  \item remaining samples making up a testing set ($\approx 820$
-    samples)
   \end{itemize}
 \end{frame}  
 
-  
-\begin{frame}{Placenta and Uterus SVM}
-  \centering
-<<placenta.roc.curve,fig.width=8,fig.height=4,out.height="0.6\\textheight",echo=FALSE>>=
-layout(matrix(1:2,1,2))
+\begin{frame}{Testing and Training Sets}
+  \begin{center}
+  \begin{tikzpicture}
+    [training/.style={rectangle,rounded corners=2mm,draw=ilblue!90!white,fill=ilblue!40!white,inner sep=2pt,minimum size=8mm,thick},
+    testing/.style={rectangle,rounded corners=2mm,draw=ilblue!90!white,fill=ilboldblue!40!white,inner sep=2pt,minimum size=8mm,thick},
+    arrow/.style={->,shorten >=1pt,>=stealth,thick},
+    sample/.style={rectangle,rounded corners=2mm,draw=ilorange!90!white,fill=ilorange!40!white,inner sep=2pt,minimum size=8mm,thick}]
+    \node[sample] (samples) {\Sexpr{nrow(predictions.caret.svm[["uterus"]][["training"]])+
+        nrow(predictions.caret.svm[["uterus"]][["testing"]])} samples};
+\onslide<2->{    \node[training] (training) [below left=of samples] {\Sexpr{nrow(predictions.caret.svm[["uterus"]][["training"]])} training samples};
+    \node[training] (training uterus) [below=of training] {\Sexpr{sum(predictions.caret.svm[["uterus"]][["training"]][,"actual"]=="uterus")} uterus,
+      \Sexpr{sum(predictions.caret.svm[["placenta"]][["training"]][,"actual"]=="placenta")} placenta};
+      
+    \draw[arrow] (samples) -- node[above left=8pt]{75\%} (training);
+    \draw[arrow] (training) -- (training uterus);
+    }
+\onslide<3->{    \node[testing] (testing) [below right=of samples] {\Sexpr{nrow(predictions.caret.svm[["uterus"]][["testing"]])} testing samples};
+    \node[testing] (testing uterus) [below=of testing] {\Sexpr{sum(predictions.caret.svm[["uterus"]][["testing"]][,"actual"]=="uterus")} uterus,
+      \Sexpr{sum(predictions.caret.svm[["placenta"]][["testing"]][,"actual"]=="placenta")} placenta};
+    \draw[arrow] (samples) -- node[above right=8pt]{25\%} (testing);
+    \draw[arrow] (testing) -- (testing uterus);}
+  \end{tikzpicture}
+\end{center}
+\end{frame}
+
+
+
+\begin{frame}{Placenta SVM: Training and Testing}
+  \begin{columns}
+    \column{0.6\textwidth}
+<<placenta.roc.curve,fig.width=4,fig.height=4,out.height="0.7\\textheight",echo=FALSE>>=
+# layout(matrix(1:2,1,2))
+par(mar=c(0,0,0,0))
 pl.roc.obj1 <- 
     plot.roc(as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"actual"])-1,
              as.numeric(predictions.caret.svm[["placenta"]][["testing"]][,"placenta"]),
@@ -389,6 +466,19 @@ legend("bottomright",
        legend=c("Placenta Testing Set", "Placenta Training Set"),
        col=c("#002058", "#E87722"),
        lwd=2)
+@ 
+\column{0.4\textwidth}
+\captionof{figure}{\ac{ROC} curve of the placenta \ac{SVM}. The
+  \ac{SVM} is highly effective at distinguishing between samples of
+  placental origin and non-placental origin.}
+\label{fig:plac_full_roc}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Uterus SVM: Training and Testing Sets}
+  \begin{columns}
+    \column{0.6\textwidth}
+<<uterus.roc.curve,fig.width=4,fig.height=4,out.height="0.7\\textheight",echo=FALSE>>=
 
 ut.roc.obj1 <- 
     plot.roc(as.numeric(predictions.caret.svm[["uterus"]][["testing"]][,"actual"])-1,
@@ -410,11 +500,12 @@ legend("bottomright",
        col=c("#002058", "#E87722"),
        lwd=2)
 @ 
-\captionof{figure}{\ac{ROC} curve of the placenta \ac{SVM} (left) and
-  uterus \ac{SVM} right) . Both \ac{SVM} are highly effective at
-  distinguishing between samples of uterus origin and non-uterus
-  origin.}
-\label{fig:plac_ut_full_roc}
+\column{0.4\textwidth}
+\captionof{figure}{\ac{ROC} curve of the uterus \ac{SVM}. The \ac{SVM}
+  is highly effective at distinguishing between samples of uterus
+  origin and non-uterus origin.}
+\label{fig:ut_full_roc}
+\end{columns}
 \end{frame}
 
 
@@ -426,6 +517,52 @@ legend("bottomright",
   \item Weighted by the FPKM measured
   \item Run using the same trained SVM shown previously
   \end{itemize}
+  \only<2->{
+\begin{textblock*}{100mm}(20mm,0.25\textheight)
+\begin{block}{Sub sampling}
+<<calc.reduced,echo=FALSE,results="asis">>=
+reduced.reads <- function(fpkms,num.reads) {
+    non.zero <- fpkms > 0
+    ret.val <- rep.int(0,length(fpkms))
+    if (!any(non.zero)) {
+        return(fpkms)
+    }
+    inc.prob <- inclusionprobabilities(fpkms[non.zero],1)
+    ret.val[non.zero] <-
+        apply(sapply(1:(num.reads/1),function(y){UPrandomsystematic(inc.prob,0)}),1,sum)
+    names(ret.val) <- names(fpkms)
+    ret.val
+}
+set.seed(1021)
+reads <- c("A"=1000,
+           "B"=2000,
+           "C"=20,
+           "D"=5000)
+reads.to.table <- function(read,reads){
+    data.table("Total Reads"=read,
+               "Gene A"=reads["A"],
+               "Gene B"=reads["B"],
+               "Gene C"=reads["C"],
+               "Gene D"=reads["D"])
+}
+rr.table <- list(reads.to.table("Orig. FPKM",reads))
+i <- 0
+for (read in c(500,500,100,100,5,5,5)){
+    i <- i+1
+    reads <- reduced.reads(reads,read)
+    rr.table[[paste0("read.",read,'.',i)]] <- 
+        reads.to.table(read,reads)
+}
+print(xtable(rbindlist(rr.table),
+             digits=0
+             ),
+      include.rownames=FALSE)
+@ 
+
+\end{block}
+\end{textblock*}
+}
+
 \end{frame}
 
 \begin{frame}{Identification of tissue in reduced reads}
@@ -554,7 +691,22 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
     \qrcode[padding]{http://dla2.us/p/em2015}
     \url{http://dla2.us/p/em2015}
   \end{center}
+  \begin{itemize}
+  \item University of Illinois and Institute for Genomic Biology
+    Startup Funds to Derek and Monica
+  \end{itemize}
 \end{frame}
+
+
+\begin{frame}[plain]
+  \acrodef{EV}[EV]{Extracellular Vesicle}
+  \acrodef{SVM}{Support Vector Machine}
+  \acrodef{ROC}{Receiver Operating Characteristic}
+  \acrodef{KNN}{K Nearest Neighbors}
+  \acrodef{SRA}{Sequence Read Archive}
+
+\end{frame}
+
 
 \section*{References}
 
@@ -565,14 +717,5 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
   \end{center}
 \end{frame}
 
-
-\begin{frame}[plain]
-  \acrodef{EV}[EV]{Extracellular Vesicle}
-\acrodef{SVM}{Support Vector Machine}
-\acrodef{ROC}{Receiver Operating Characteristic}
-\acrodef{KNN}{K Nearest Neighbors}
-\acrodef{SRA}{Sequence Read Archive}
-
-\end{frame}
 
 \end{document}
