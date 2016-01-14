@@ -100,13 +100,14 @@ capwords <- function(s, strict = FALSE) {
 }
 @ 
 
-<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced")))>>=
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced","housekeeping_genes_superset")))>>=
 for (a in paste0("../tissue_specific_expression/",
                  c("tissue_specific_markers",
                    "interesting_gene_reads_wide",
                    "combined_star_logs",
                    "svm_test_results",
-                   "svm_test_results_reduced"
+                   "svm_test_results_reduced",
+                   "housekeeping_genes_superset"
                    ))) {
     load(a)
 }
@@ -338,6 +339,31 @@ print(specific.markers.plot("placenta",
 \end{columns}
 \end{frame}
 
+
+\subsection{Tissue specificity shape}
+
+\begin{frame}
+<<tissue.specificity,shape.figure,fig.width=8,fig.height=8,echo=FALSE>>=
+tissue.specific.genes[,type:="not specific"]
+tissue.specific.genes[possibly.specific==TRUE,type:="tissue specific"]
+tissue.specific.genes[tracking_id %in% housekeeping.genes.superset[,tracking_id] &
+                          possibly.specific==FALSE,type:="housekeeping"]
+tissue.specific.genes[tracking_id %in% housekeeping.genes.superset[,tracking_id] &
+                          possibly.specific==TRUE,type:="housekeeping and specific"]
+
+tissue.specific.genes[,type:=
+                          factor(type,
+                                 levels=c("not specific","tissue specific",
+                                     "housekeeping",
+                                     "housekeeping and specific"
+                                          ))]
+ggplot(tissue.specific.genes[gi.max>0],
+       aes(y=specificity,x=gi.max,color=type))+
+    geom_hex(bins=100)+scale_x_log10()+
+        xlab("Max Expression (FPKM)")+
+            ylab("Tissue Specificity")
+@ 
+\end{frame}
 
 \section{SVM to distinguish tissues}
 
