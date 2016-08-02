@@ -49,7 +49,7 @@ read_biaser.pl
 
 =cut
 
-
+use List::Util qw(sum);
 use IO::Uncompress::AnyUncompress;
 use vars qw($DEBUG);
 
@@ -66,19 +66,15 @@ my %options = (debug           => 0,
                seed            => rand,
                reads           => undef,
                skip_reads      => 0,
-               count           => 0,
                min_likelihood => 0.5,
                motif_output_abundance => 0.25,
-               motif_input_abundance  => 0.01,
+               # motif_input_abundance  => 0.01,
                motif => [qw(ACCAGCCU CAGUGAGC UAAUCCCA)],
               );
 
 GetOptions(\%options,
            'reads=s',
            'seed|random-seed=s',
-           'count!',
-           'skip_reads|skip-reads=i',
-           'motif_input_abundance|motif-input-abundance=s',
            'motif_output_abundance|motif-output-abundance=s',
            'motif=s@',
            'output=s',
@@ -115,21 +111,82 @@ if (defined $options{output}) {
         die "Unable to open $options{output} for writing: $!";
 }
 
-# in order to have output abundance, motif containing reads need to
-# have more (or less) probability of being output than normal reads.
-
-my $motif_keep = $options{min_likelihood};
-my $non_motif_keep = $options{min_likelihood};
-if ($options{motif_output_abundance} > $options{motif_input_abundance}) {
-    $non_motif_keep = $motif_keep / ($options{motif_output_abundance} /
-                                     $options{motif_input_abundance});
-} else {
-    $motif_keep = $non_motif_keep / ((1-$options{motif_output_abundance}) /
-                                     (1-$options{motif_input_abundance}));
-}
-
 my $count = 0;
 my $total_reads_kept = 0;
+my @file_counts;
+my @total_counts;
+use Data::Printer;
+my @file_reads;
+for my $fn (@files) {
+    my $fh;
+    if (not defined $fn) {
+        $fh = \*STDIN;
+    } else {
+        p $fn;
+        $fh = IO::Uncompress::AnyUncompress->new($fn,MultiStream => 1) or
+            die "Unable to open $fn for reading: $!";
+    }
+    my $read_pos = 9999;
+    my $current_read;
+    my $read_id;
+    my $match_motif;
+    my $quality_ok = 0;
+    push @file_reads,[];
+    push @file_counts,[0,0];
+    while (<$fh>) {
+        $read_pos++;
+        if ($read_pos > 3) {
+            $read_pos = 0;
+            if ($quality_ok and defined $read_id) {
+                if ($match_motif) {
+                    # store matching read ids and count them per file
+                    push @{$file_reads[-1][0]},$read_id;
+                    $file_counts[-1][0]++;
+                    $total_counts[0]++;
+                } else {
+                    push @{$file_reads[-1][1]},$read_id;
+                    $file_counts[-1][1]++;
+                    $total_counts[1]++;
+                }
+            }
+        }
+        if ($read_pos == 0) {
+            $current_read = $_;
+            ($read_id) = $_ =~ /^(\S+)/;
+        } elsif ($read_pos == 1) {
+            $match_motif = $_ =~ $motif_regex;
+        } elsif ($read_pos == 3) {
+            # if the average quality is more than 15, keep the read.
+            # [That's pretty generous, actually.]
+            $quality_ok = sum(map {ord($_) - 33} split '',$_)/length($_) > 15;
+        }
+
+    }
+    close($fh);
+}
+
+my @file_keep_reads;
+## figure out the total reads and the proportion of matched and non-matched
+print STDERR "There were ".sum(@total_counts)." reads in ".scalar @file_counts." files\n";
+print STDERR $total_counts[0]." contained the motif, ".$total_counts[1]." did not\n";
+my $kept_reads = 0;
+while ($kept_reads < $options{reads}) {
+    my $m = rand > $options{motif_output_abundance} ? 1 : 0;
+    # choose a motif matching read ($m==0) or non-matching ($m==1)
+    my $r = rand $total_counts[$m];
+    my $f = 0;
+    while ($r > $file_counts[$f][$m]) {
+        $r -= $file_counts[$f][$m];
+    }
+    if ($file_keep_reads[$f]{$file_reads[$f][$m][$r]}) {
+        next;
+    } else {
+        $file_keep_reads[$f]{$file_reads[$f][$m][$r]} = 1;
+        $kept_reads++;
+    }
+}
+
+my $f = 0;
 for my $fn (@files) {
     my $fh;
     if (not defined $fn) {
@@ -138,8 +195,7 @@ for my $fn (@files) {
         $fh = IO::Uncompress::AnyUncompress->new($fn,MultiStream => 1) or
             die "Unable to open $fn for reading: $!";
     }
-    my $read_pos = 9999;
-    my $current_read = '';
+    my $read_pos = 999;
     my $keep_read = 0;
     while (<$fh>) {
         $read_pos++;
@@ -147,58 +203,15 @@ for my $fn (@files) {
             $read_pos = 0;
         }
         if ($read_pos == 0) {
-            $current_read = $_;
-            $keep_read = 0;
-        } elsif ($read_pos == 1) {
-            if ($options{count}) {
-                if ($_ =~ $motif_regex) {
-                    $count++;
-                }
-                $total_reads_kept++;
-                last if defined $options{reads} and $total_reads_kept > $options{reads};
-            } else {
-                my $r = rand;
-                # first, we want to ignore a certain percentage of all reads
-                if ($r <= $options{min_likelihood}) {
-                    # then, if we're going to keep it at all, check to see
-                    # if it matches a motif.
-                    if ($_ =~ $motif_regex) {
-                        print STDERR "matched motif; ";
-                        # it matches;
-                        if ($r <= $motif_keep) {
-                            print STDERR "kept ";
-                            $keep_read = 1;
-                        }
-                        print STDERR "($r)\n";
-                    } else {
-                        print STDERR "didn't match motif; ";
-                        if ($r <= $non_motif_keep) {
-                            print STDERR "kept ";
-                            $keep_read = 1;
-                        }
-                        print STDERR "($r)\n";
-                    }
-                }
-            }
+            my ($read_id) = $_ =~ /^(\S+)/;
+            $keep_read = exists $file_keep_reads[$f]{$read_id};
         }
-        if ($keep_read) {
-            $current_read .= $_;
-            if ($read_pos == 3) {
-                print {$output} $current_read;
-                $total_reads_kept++;
-                if (defined $options{reads} and $total_reads_kept >= $options{reads}) {
-                    last;
-                }
-            }
-        }
+        print {$output} $_ if $keep_read;
     }
+    close($fh);
+    $f++;
 }
 
-if ($options{count}) {
-    print {$output} "motif_input_abundance = ".$count/$total_reads_kept;
-}
-
-close($output);
 
 
 
