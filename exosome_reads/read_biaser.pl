@@ -14,13 +14,18 @@ use Pod::Usage;
 
 =head1 NAME
 
-read_biaser.pl - biases reads towards motifs
+read_biaser.pl - biases reads towards motifs by sampling reads without replacement
 
 =head1 SYNOPSIS
 
 read_biaser.pl [options]
 
  Options:
+   --reads number of reads to sample
+   --output-prefix name of output file prefix
+   --seed,--random-seed  Random seed
+   --samplings Number of times to sample reads
+   --motif-output-abundance Abundance of motif in output (0.25)
    --debug, -d debugging level (Default 0)
    --help, -h display this help
    --man, -m display manual
@@ -28,6 +33,27 @@ read_biaser.pl [options]
 =head1 OPTIONS
 
 =over
+
+=item B<--reads>
+
+Number of reads to sample. If repeated, each read option will be
+output C<samplings> times. Required.
+
+=item B<--samplings>
+
+Number of samplings to perform; defaults to 1. [Can be used to sample
+multiple sets of reads from a single file without re-reading the
+file.]
+
+=item B<--output-prefix>
+
+Output prefix of file. Defaults to
+biased_reads_rC<reads>_sC<sample>.fastq where C<reads> is the number
+of reads, and C<sample> is the nth sampling.
+
+=item B<--seed,--random-seed>
+
+Random seed to use; defaults to rand()
 
 =item B<--debug, -d>
 
@@ -64,20 +90,23 @@ my %options = (debug           => 0,
                help            => 0,
                man             => 0,
                seed            => rand,
-               reads           => undef,
+               samplings       => 1,
+               reads           => [],
                skip_reads      => 0,
                min_likelihood => 0.5,
+               'output_prefix' => 'biased_reads',
                motif_output_abundance => 0.25,
                # motif_input_abundance  => 0.01,
                motif => [qw(ACCAGCCU CAGUGAGC UAAUCCCA)],
               );
 
 GetOptions(\%options,
-           'reads=s',
+           'reads=i@',
            'seed|random-seed=s',
            'motif_output_abundance|motif-output-abundance=s',
            'motif=s@',
-           'output=s',
+           'samplings=i',
+           'output_prefix|output-prefix=s',
            'debug|d+','help|h|?','man|m');
 
 pod2usage() if $options{help};
@@ -86,8 +115,10 @@ pod2usage({verbose=>2}) if $options{man};
 $DEBUG = $options{debug};
 
 my @USAGE_ERRORS;
-if (defined $options{reads} and $options{reads} < 1) {
-    push @USAGE_ERRORS,"You should give at least one read";
+if (not @{$options{reads}} or
+    grep {$_ <= 1} @{$options{reads}}
+   ) {
+    push @USAGE_ERRORS,"You must pass --reads and all --reads must be >= 1";
 }
 
 srand($options{seed});
@@ -105,24 +136,31 @@ my $motif_regex = '('.join('|',map {s/[UT]/\[TU\]/; $_} @{$options{motif}}).')';
 print STDERR "motif regex: $motif_regex\n";
 $motif_regex = qr/$motif_regex/;
 
-my $output = \*STDOUT;
-if (defined $options{output}) {
-    open($output,'>',$options{output}) or
-        die "Unable to open $options{output} for writing: $!";
+my @output_files;
+for my $i (0..$#{$options{reads}}) {
+    for my $j (0..($options{samplings}-1)) {
+        my $fn = $options{output_prefix}.
+            '_r'.$options{reads}[$i].
+            '_s'.($j+1).'.fastq';
+        $output_files[$i][$j] =
+            IO::File->new($fn,'w') or
+                die "Unable to open $fn for writing: $!";
+    }
 }
 
+
+## read in the file to figure out which reads match the motifs, and
+## which do not
 my $count = 0;
 my $total_reads_kept = 0;
 my @file_counts;
 my @total_counts;
-use Data::Printer;
 my @file_reads;
 for my $fn (@files) {
     my $fh;
     if (not defined $fn) {
         $fh = \*STDIN;
     } else {
-        p $fn;
         $fh = IO::Uncompress::AnyUncompress->new($fn,MultiStream => 1) or
             die "Unable to open $fn for reading: $!";
     }
@@ -169,20 +207,26 @@ my @file_keep_reads;
 ## figure out the total reads and the proportion of matched and non-matched
 print STDERR "There were ".sum(@total_counts)." reads in ".scalar @file_counts." files\n";
 print STDERR $total_counts[0]." contained the motif, ".$total_counts[1]." did not\n";
-my $kept_reads = 0;
-while ($kept_reads < $options{reads}) {
-    my $m = rand > $options{motif_output_abundance} ? 1 : 0;
-    # choose a motif matching read ($m==0) or non-matching ($m==1)
-    my $r = rand $total_counts[$m];
-    my $f = 0;
-    while ($r > $file_counts[$f][$m]) {
-        $r -= $file_counts[$f][$m];
-    }
-    if ($file_keep_reads[$f]{$file_reads[$f][$m][$r]}) {
-        next;
-    } else {
-        $file_keep_reads[$f]{$file_reads[$f][$m][$r]} = 1;
-        $kept_reads++;
+for my $i (0..$#{$options{reads}}) {
+    my $read_count = $options{reads}[$i];
+    for my $j (0..($options{samplings}-1)) {
+        my $kept_reads = 0;
+        while ($kept_reads < $read_count) {
+            my $m = rand > $options{motif_output_abundance} ? 1 : 0;
+            # choose a motif matching read ($m==0) or non-matching ($m==1)
+            # at random from the total set of reads
+            my $r = rand $total_counts[$m];
+            my $f = 0;
+            while ($r > $file_counts[$f][$m]) {
+                $r -= $file_counts[$f][$m];
+            }
+            if ($file_keep_reads[$f]{$file_reads[$f][$m][$r]}{$i.'_'.$j}) {
+                next;
+            } else {
+                $file_keep_reads[$f]{$file_reads[$f][$m][$r]}{$i.'_'.$j} = 1;
+                $kept_reads++;
+            }
+        }
     }
 }
 
@@ -196,17 +240,25 @@ for my $fn (@files) {
             die "Unable to open $fn for reading: $!";
     }
     my $read_pos = 999;
-    my $keep_read = 0;
+    my $keep_read_id = 0;
     while (<$fh>) {
         $read_pos++;
         if ($read_pos > 3) {
             $read_pos = 0;
         }
         if ($read_pos == 0) {
+            $keep_read_id = 0;
             my ($read_id) = $_ =~ /^(\S+)/;
-            $keep_read = exists $file_keep_reads[$f]{$read_id};
+            if (exists $file_keep_reads[$f]{$read_id}) {
+                $keep_read_id = $read_id;
+            }
         }
-        print {$output} $_ if $keep_read;
+        if ($keep_read_id) {
+            for my $ij (keys %{$file_keep_reads[$f]{$keep_read_id}}) {
+                my ($i,$j) = split '_',$ij;
+                print {$output_files[$i][$j]} $_;
+            }
+        }
     }
     close($fh);
     $f++;
