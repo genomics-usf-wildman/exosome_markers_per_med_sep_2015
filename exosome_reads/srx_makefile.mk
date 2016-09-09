@@ -7,6 +7,7 @@ SHELL=/bin/bash
 
 STRIP_PATCHES:=1
 STRIP_PATCHES_SCRIPT:=../../rnaseq_workflow/strip_patches.pl
+STRIP_PATCHES_OPTIONS:=--valid-chr='^(?:chr)?[12]?\d|MT|[XY]$$'
 REFERENCE_DIR:=../../tissue_expression/ref_seqs/
 include srx_info.mk
 
