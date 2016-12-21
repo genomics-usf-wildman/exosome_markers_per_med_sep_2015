@@ -41,6 +41,7 @@
 % this package will stretch the font slightly if necessary.
 \usepackage{microtype}
 \usepackage{zref-xr,zref-user}
+\usepackage[capitalize]{cleveref}
 \newenvironment{narrow}[2]{%
   \begin{list}{}{%
       \setlength{\topsep}{0pt}%
@@ -77,6 +78,8 @@
 \clubpenalty = 10000
 \widowpenalty = 10000
 \pagestyle{fancy}
+
+\newcommand{\EV}{\EV}
 
 \begin{document}
 \author[1]{Don Armstrong}
@@ -121,13 +124,14 @@ capwords <- function(s, strict = FALSE) {
 @ 
 
 
-<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced")))>>=
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced","housekeeping_genes_superset")))>>=
 for (a in paste0("../tissue_specific_expression/",
                  c("tissue_specific_markers",
                    "interesting_gene_reads_wide",
                    "combined_star_logs",
                    "svm_test_results",
-                   "svm_test_results_reduced"
+                   "svm_test_results_reduced",
+                   "housekeeping_genes_superset"
                    ))) {
     load(a)
 }
@@ -186,10 +190,14 @@ specific.markers.plot <- function(tissue.name,genes) {
 
 \section{Introduction}
 
-\acp{EV} are small (40-1000nm) compartments that can be found in
-blood, saliva, and urine. \acp{EV} originate from the plasma membrane
+\subsection{Housekeeping genes}
+
+\subsection{Cell free RNA and Exosomes in Diagnostics}
+
+\EV are small (40-1000nm) compartments that can be found in
+blood, saliva, and urine. \EV originate from the plasma membrane
 or multivesicular endosome of many cell types and contain proteins,
-lipids, mRNA, miRNA, and many other non-coding RNAs. Because \acp{EV}
+lipids, mRNA, miRNA, and many other non-coding RNAs. Because \EV
 contain mRNA from the cell of origin and can be obtained without
 invasive procedures, they are a promising remote sensor of the
 transcriptome of tissues that would otherwise be inaccessible.
@@ -200,26 +208,11 @@ of a specific \ac{EV}, we have identified miRNA and mRNA markers which
 are characteristic of multiple organs and tissues from existing
 publicly-available RNAseq transcriptomes by calculating a tissue
 specificity index.
-    
-The tissue specificity index for gene $g$ ($\tau_g$) is
-    
-\begin{equation}
-  \tau_g = \frac{\sum_{i=1}^{i=N} \left(1-\frac{X_{i,g}}{\mathrm{max}(X_g)}\right)}{N-1}
-\end{equation}
-\label{eq:tissue_specificity_index}
-    
-where $N$ is the number of tissues, $X_{i,g}$ is the mean expression
-of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is the maximal
-expression of gene $g$ across all tissues.
-    
-We also trained a multiclass \ac{SVM} to accurately identify the
-tissue of origin, and present the results of the identification of
-reads from uterine and placental origin here. Tables showing tissue
-specific genes from all
-\Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))}
-tissues can be found on \url{http://dla2.us/p/em2015}.
 
+    
 \section{Methods}
+
+\subsection{Tissue RNA-seq}
 
 \Sexpr{star.logs[grepl("Number of input reads",field),sum(as.numeric(value))]} %
 %
@@ -255,7 +248,44 @@ and the average total mapping percentage was %
 % 
 For samples where the reads were not publicly available (GTEx and
 some Roadmap Epigenomics samples), the RPKM were taken from publicly
-available result files (see code for details).
+available result files (see code for details). 
+
+\subsection{Tissue Specificity}
+
+The tissue specificity index for gene $g$ ($\tau_g$) is
+    
+\begin{equation}
+  \tau_g = \frac{\sum_{i=1}^{i=N} \left(1-\frac{X_{i,g}}{\mathrm{max}(X_g)}\right)}{N-1}
+\end{equation}
+\label{eq:tissue_specificity_index}
+    
+where $N$ is the number of tissues, $X_{i,g}$ is the mean expression
+of gene $g$ in tissue $i$ and $\mathrm{max}(X_g)$ is the maximal
+expression of gene $g$ across all tissues.
+    
+We also trained a multiclass \ac{SVM} to accurately identify the
+tissue of origin, and present the results of the identification of
+reads from uterine and placental origin here. Tables showing tissue
+specific genes from all
+\Sexpr{length(unique(na.omit(tissue.specific.genes[,tissue])))}
+tissues can be found on \url{http://dla2.us/p/em2015}.
+
+\subsection{Read Biasing}
+
+The population of RNAs found in \EV are distinct from the cytosolic
+pool, and are likely selectively sorted into \EV~%
+\cite{Villarroya-Beltri.ea2014:Sortingitoutregulation,Hoen.ea2012:DeepsequencingofRNA,Janas.ea2015:MechanismsofRNAloading,Balkom.ea2015:Quantitativeandqualitativeanalysis}.
+Specifically, the motives
+GGAG~\cite{Villarroya-Beltri.ea2013:SumoylatedhnRNPA2B1controlssorting},
+ACCAGCCU, CAGUGAGC, and
+UAAUCCCA~\cite{Batagov.ea2013:Exosomessecretedbyhuman} are enriched in
+\EV. Owing to the limited number of tissue-specific \ac{EV} RNA-seq
+results, we have biased the reads from existing tissue-specific
+RNA-seq results to preferentially include RNAs which contain motifs
+found in exosomes and also match the lower number of unique RNAs which
+are found in individual exosomes.
+
+\subsection{Machine Learning}
 
 The \ac{SVM} was generated using caret
 \cite{Kuhn2008:Buildingpredictivemodelsinr} and svmRadial
@@ -268,15 +298,59 @@ the remaining samples making up a testing set ($\approx 820$ samples).
 
 \section{Results}
 
+\subsection{Tissue Specific Genes and Housekeeping genes}
 
-\subsection{Uterus Specific}
+\begin{figure}
+<<tissue.specificity,shape.figure,fig.width=8,fig.height=8,echo=FALSE>>=
+invisible(tissue.specific.genes[,type:="not specific"])
+invisible(tissue.specific.genes[,housekeeping:="not housekeeping"])
+invisible(tissue.specific.genes[possibly.specific==TRUE,type:="tissue specific"])
+invisible(tissue.specific.genes[tracking_id %in% housekeeping.genes.superset[,tracking_id] &
+                                 possibly.specific==FALSE,housekeeping:="housekeeping"])
+invisible(tissue.specific.genes[tracking_id %in% housekeeping.genes.superset[,tracking_id] &
+                          possibly.specific==TRUE,housekeeping:="housekeeping and specific"])
+
+invisible(tissue.specific.genes[,type:=
+                          factor(type,
+                                 levels=c("not specific","tissue specific",
+                                     "housekeeping",
+                                     "housekeeping and specific"
+                                          ))])
+print(ggplot(tissue.specific.genes[gi.max>0],
+             aes(y=specificity,x=gi.max,colour=type))+
+      ##geom_point()+
+      geom_hex(bins=50)+
+      ## stat_summary_2d(fun=function(x){length(x)},bins=100)+
+      geom_point(aes(colour=housekeeping),data=tissue.specific.genes[housekeeping!="not housekeeping",])+
+      scale_x_log10()+
+      xlab("Max Expression (FPKM)")+
+      ylab("Tissue Specificity")+
+      theme(legend.position="top")
+    )
+@ 
+\caption{Shape of tissue specific genes}
+\label{fig:tissue_specific_shape}
+\end{figure}
+
+\Cref{fig:tissue_specific_shape} shows the shape of the tissue
+specificity measure of all genes along with the maximum expression in
+a particular tissue. Almost all housekeeping genes identified by
+\citet{Eisenberg.ea2013:Humanhousekeepinggenesrevisited} have
+$\tau_g \le 0.93$ with the exception of
+%
+\Sexpr{tissue.specific.genes[housekeeping=="housekeeping and specific",gene]}
+%
+
+\subsection{Uterus and Placenta Specific Genes}
+
 <<uterus.specific.markers.table,results="asis",echo=FALSE>>=
 temp <- tissue.specific.genes[tissue=="uterus",
                               list(gene,tissue,specificity,gi.max)]
 setorder(temp,-gi.max)
 setnames(temp,c("Gene","Tissue","Tissue Specificity","Mean Expression"))
 print(xtable(temp,
-             caption="Uterus specific genes",label="tab:uterus_specific_genes"),
+             caption="Uterus specific genes",
+             label="tab:uterus_specific_genes"),
       include.rownames=FALSE,
       )
 rm(temp)
@@ -326,8 +400,6 @@ print(xtable(temp,
 rm(temp)
 @ 
 
-\subsection{Placenta Specific Genes}
-
 <<placenta.specific.markers.table,results="asis",echo=FALSE>>=
 temp <- tissue.specific.genes[tissue=="placenta" & gi.max > 100,
                               list(gene,tissue,specificity,gi.max)]
@@ -363,8 +435,9 @@ print(specific.markers.plot("placenta",
 \label{fig:placenta_specific_markers}
 \end{figure}
 
+\subsection{Biasing reads towards exosomes}
 
-\subsection{Identification of Tissue source of Exosomes}
+\subsection{Machine learning to identify tissue source}
 
 \begin{figure}
 <<placenta.roc.curve,fig.width=8,fig.height=8,echo=FALSE>>=
@@ -468,9 +541,45 @@ grid.text(c("A","B","C","D"),
 \label{fig:plac_ut_roc}
 \end{figure}
 
-\begin{figure}
-\label{fig:plac_ut_red_roc}
-\end{figure}
+
+<<calc.reduced,echo=FALSE,results="asis">>=
+reduced.reads <- function(fpkms,num.reads) {
+    non.zero <- fpkms > 0
+    ret.val <- rep.int(0,length(fpkms))
+    if (!any(non.zero)) {
+        return(fpkms)
+    }
+    inc.prob <- inclusionprobabilities(fpkms[non.zero],1)
+    ret.val[non.zero] <-
+        apply(sapply(1:(num.reads/1),function(y){UPrandomsystematic(inc.prob,0)}),1,sum)
+    names(ret.val) <- names(fpkms)
+    ret.val
+}
+set.seed(1021)
+reads <- c("A"=1000,
+           "B"=2000,
+           "C"=20,
+           "D"=5000)
+reads.to.table <- function(read,reads){
+    data.table("Total Reads"=read,
+               "Gene A"=reads["A"],
+               "Gene B"=reads["B"],
+               "Gene C"=reads["C"],
+               "Gene D"=reads["D"])
+}
+rr.table <- list(reads.to.table("Orig. FPKM",reads))
+i <- 0
+for (read in c(500,500,100,100,5,5,5)){
+    i <- i+1
+    reads <- reduced.reads(reads,read)
+    rr.table[[paste0("read.",read,'.',i)]] <- 
+        reads.to.table(read,reads)
+}
+print(xtable(rbindlist(rr.table),
+             digits=0
+             ),
+      include.rownames=FALSE)
+@ 
 
 \section{Discussion}
 
