@@ -16,7 +16,7 @@
 \usepackage{setspace}
 \usepackage{txfonts}
 \usepackage{fancyref}
-\usepackage{acronym}
+\usepackage{acro}
 \usepackage{array}
 \usepackage{dcolumn}
 \usepackage{adjustbox}

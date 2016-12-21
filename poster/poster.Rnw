@@ -12,7 +12,7 @@
 \usepackage{fancybox}
 \usepackage{booktabs}
 % \usepackage{multirow}
-\usepackage{acronym}
+\usepackage{acro}
 \usepackage{qrcode}
 \usepackage[backend=biber,natbib=true,hyperref=true,style=nature]{biblatex}
 \addbibresource{references.bib}
