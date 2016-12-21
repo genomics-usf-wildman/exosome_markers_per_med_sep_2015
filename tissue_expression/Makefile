@@ -78,7 +78,8 @@ combined_star_logs: combine_star_logs.R  $(STAR_LOGS)
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
-combined_isoform_reads: combine_isoform_fpkms.R $(ISOFORM_FPKMS)
+combined_isoform_reads: combine_isoform_fpkms.R $(ISOFORM_FPKMS) \
+	GTEx_Analysis_V4_RNA-seq_Flux1.6_transcript_rpkm.txt.gz
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
