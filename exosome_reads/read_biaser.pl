@@ -161,7 +161,7 @@ for my $fn (@files) {
     if (not defined $fn) {
         $fh = \*STDIN;
     } else {
-        $fh = IO::Uncompress::AnyUncompress->new($fn,MultiStream => 1) or
+        open($fh,'-|','gzip','-dc',$fn) or
             die "Unable to open $fn for reading: $!";
     }
     my $read_pos = 9999;
@@ -236,7 +236,7 @@ for my $fn (@files) {
     if (not defined $fn) {
         $fh = \*STDIN;
     } else {
-        $fh = IO::Uncompress::AnyUncompress->new($fn,MultiStream => 1) or
+        open($fh,'-|','gzip','-dc',$fn) or
             die "Unable to open $fn for reading: $!";
     }
     my $read_pos = 999;
