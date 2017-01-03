@@ -22,7 +22,7 @@
 \usepackage{adjustbox}
 \usepackage{longtable}
 \usepackage{pdflscape}
-\usepackage[backend=biber,natbib=true,hyperref=true,style=numeric-comp]{biblatex}
+\usepackage[backend=biber,natbib=true,hyperref=true,citestyle=numeric-comp,style=nature,autocite=inline]{biblatex}
 \addbibresource{references.bib}
 \usepackage[noblocks,auth-sc]{authblk}
 \usepackage[hyperfigures,bookmarks,colorlinks]{hyperref}
@@ -79,8 +79,6 @@
 \widowpenalty = 10000
 \pagestyle{fancy}
 
-\newcommand{\EV}{\EV}
-
 \begin{document}
 \author[1]{Don Armstrong}
 \author[1,2]{Monica Uddin}
@@ -100,7 +98,7 @@
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
 opts_chunk$set(dev="cairo_pdf",out.width="\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
-#opts_chunk$set(cache=TRUE, autodep=TRUE)
+opts_chunk$set(cache=TRUE, autodep=TRUE)
 options(device = function(file, width = 8, height = 7, ...) {
   cairo_pdf(tempfile(), width = width, height = height, ...)
 })
@@ -124,7 +122,7 @@ capwords <- function(s, strict = FALSE) {
 @ 
 
 
-<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=tools::md5sum(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced","housekeeping_genes_superset")))>>=
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=file.info(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced","housekeeping_genes_superset")))[,"mtime"]>>=
 for (a in paste0("../tissue_specific_expression/",
                  c("tissue_specific_markers",
                    "interesting_gene_reads_wide",
@@ -194,10 +192,10 @@ specific.markers.plot <- function(tissue.name,genes) {
 
 \subsection{Cell free RNA and Exosomes in Diagnostics}
 
-\EV are small (40-1000nm) compartments that can be found in
-blood, saliva, and urine. \EV originate from the plasma membrane
+\Ac{EV} are small (40-1000nm) compartments that can be found in
+blood, saliva, and urine. \Ac{EV} originate from the plasma membrane
 or multivesicular endosome of many cell types and contain proteins,
-lipids, mRNA, miRNA, and many other non-coding RNAs. Because \EV
+lipids, mRNA, miRNA, and many other non-coding RNAs. Because \ac{EV}
 contain mRNA from the cell of origin and can be obtained without
 invasive procedures, they are a promising remote sensor of the
 transcriptome of tissues that would otherwise be inaccessible.
@@ -239,7 +237,7 @@ samples from the \ac{SRA}.
 Reads were aligned to \textit{Homo sapiens} reference genome GRCh38
 with Ensembl annotation release 80 using STAR v2.4.2a
 \cite{Dobin.ea2013:STARultrafastuniversalRNA-seq} and called using
-Tophat 2 v2.0.10
+Cufflinks v2.2.1
 \cite{Trapnell.ea2009:TopHatdiscoveringsplicejunctions}. The average
 percentage of uniquely mapped reads was %
 \Sexpr{mean(as.numeric(gsub("%","",star.logs[field=="Uniquely mapped reads %",value])))}\%
@@ -272,14 +270,14 @@ tissues can be found on \url{http://dla2.us/p/em2015}.
 
 \subsection{Read Biasing}
 
-The population of RNAs found in \EV are distinct from the cytosolic
-pool, and are likely selectively sorted into \EV~%
+The population of RNAs found in \ac{EV} are distinct from the cytosolic
+pool, and are likely selectively sorted into \ac{EV}~%
 \cite{Villarroya-Beltri.ea2014:Sortingitoutregulation,Hoen.ea2012:DeepsequencingofRNA,Janas.ea2015:MechanismsofRNAloading,Balkom.ea2015:Quantitativeandqualitativeanalysis}.
 Specifically, the motives
 GGAG~\cite{Villarroya-Beltri.ea2013:SumoylatedhnRNPA2B1controlssorting},
 ACCAGCCU, CAGUGAGC, and
 UAAUCCCA~\cite{Batagov.ea2013:Exosomessecretedbyhuman} are enriched in
-\EV. Owing to the limited number of tissue-specific \ac{EV} RNA-seq
+\ac{EV}. Owing to the limited number of tissue-specific \ac{EV} RNA-seq
 results, we have biased the reads from existing tissue-specific
 RNA-seq results to preferentially include RNAs which contain motifs
 found in exosomes and also match the lower number of unique RNAs which
@@ -287,21 +285,23 @@ are found in individual exosomes.
 
 \subsection{Machine Learning}
 
-The \ac{SVM} was generated using caret
+The classification of samples into reads of placental origin vs
+non-placental origin or uterine origin vs non-uterine origin was
+performed using a \ac{SVM}. The \ac{SVM} was generated using caret
 \cite{Kuhn2008:Buildingpredictivemodelsinr} and svmRadial
 \cite{Karatzoglou2004:kernlab} with 10 cycles of 10 repeats and a tune
 length of 8 with a training set representing $\approx 75\%$ of the
 samples ($\approx 2450$ samples total, including $\approx 35$ uterine
 or $\approx 60$ placenta) in each of the groups chosen at random, with
 the remaining samples making up a testing set ($\approx 820$ samples).
- 
+
 
 \section{Results}
 
 \subsection{Tissue Specific Genes and Housekeeping genes}
 
 \begin{figure}
-<<tissue.specificity,shape.figure,fig.width=8,fig.height=8,echo=FALSE>>=
+<<tissue.specificity.shape.figure,fig.width=8,fig.height=8,echo=FALSE>>=
 invisible(tissue.specific.genes[,type:="not specific"])
 invisible(tissue.specific.genes[,housekeeping:="not housekeeping"])
 invisible(tissue.specific.genes[possibly.specific==TRUE,type:="tissue specific"])
@@ -512,12 +512,12 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
        col=c("brown","green","#002058", "#E87722"),
        lwd=2)
 }
-grid.text(c("A","B","C","D"),
-          x=unit(c(0,0.5,0,0.5),"npc"),
-          y=unit(c(1,1,0.5,0.5),"npc"),
-          just=c("left","top"),
-          gp=gpar(fontsize=32)
-          )
+### grid.text(c("A","B","C","D"),
+###           x=unit(c(0,0.5,0,0.5),"npc"),
+###           y=unit(c(1,1,0.5,0.5),"npc"),
+###           just=c("left","top"),
+###           gp=gpar(fontsize=32)
+###           )
 
 @
 
