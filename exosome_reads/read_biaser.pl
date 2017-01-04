@@ -24,6 +24,7 @@ read_biaser.pl [options]
    --reads number of reads to sample
    --output-prefix name of output file prefix
    --seed,--random-seed  Random seed
+   --paired Are reads paired?
    --samplings Number of times to sample reads
    --motif-output-abundance Abundance of motif in output (0.25)
    --debug, -d debugging level (Default 0)
@@ -78,6 +79,9 @@ read_biaser.pl
 use List::Util qw(sum);
 use IO::Uncompress::AnyUncompress;
 use vars qw($DEBUG);
+#use Math::Random;
+use List::Util qw(shuffle);
+use POSIX qw(floor);
 
 # In T cells, GGAG is required to target miRNA to T cell
 # motifs\cite{Villarroya-Beltri.ea2013:SumoylatedhnRNPA2B1controlssorting}.
@@ -92,6 +96,7 @@ my %options = (debug           => 0,
                seed            => rand,
                samplings       => 1,
                reads           => [],
+               paired          => 0,
                skip_reads      => 0,
                min_likelihood => 0.5,
                'output_prefix' => 'biased_reads',
@@ -103,6 +108,7 @@ my %options = (debug           => 0,
 GetOptions(\%options,
            'reads=i@',
            'seed|random-seed=s',
+           'paired!',
            'motif_output_abundance|motif-output-abundance=s',
            'motif=s@',
            'samplings=i',
@@ -117,154 +123,197 @@ $DEBUG = $options{debug};
 my @USAGE_ERRORS;
 if (not @{$options{reads}} or
     grep {$_ <= 1} @{$options{reads}}
-   ) {
+  ) {
     push @USAGE_ERRORS,"You must pass --reads and all --reads must be >= 1";
 }
 
 srand($options{seed});
-
-pod2usage(join("\n",@USAGE_ERRORS)) if @USAGE_ERRORS;
-
+# random_set_seed(random_seed_from_phrase($options{seed}));
+print STDERR "Seed: $options{seed}\n";
 
 my @files = @ARGV;
 if (not @ARGV) {
-    @files = undef;
+    push @USAGE_ERRORS,"You must provide at least one fasta file";
 }
+if ($options{paired} and (@files % 2 != 0)) {
+    push @USAGE_ERRORS,"If reads are paired, you must give an even number of fasta files";
+}
+
+pod2usage(join("\n",@USAGE_ERRORS)) if @USAGE_ERRORS;
 
 # build motif markers regex
 my $motif_regex = '('.join('|',map {s/[UT]/\[TU\]/; $_} @{$options{motif}}).')';
 print STDERR "motif regex: $motif_regex\n";
 $motif_regex = qr/$motif_regex/;
 
-my @output_files;
-for my $i (0..$#{$options{reads}}) {
-    for my $j (0..($options{samplings}-1)) {
-        my $fn = $options{output_prefix}.
-            '_r'.$options{reads}[$i].
-            '_s'.($j+1).'.fastq';
-        $output_files[$i][$j] =
-            IO::File->new($fn,'w') or
-                die "Unable to open $fn for writing: $!";
-    }
-}
+my ($max_samples,@output_files) = open_output_files(%options);
 
-
-## read in the file to figure out which reads match the motifs, and
-## which do not
-my $count = 0;
-my $total_reads_kept = 0;
-my @file_counts;
-my @total_counts;
-my @file_reads;
-for my $fn (@files) {
-    my $fh;
-    if (not defined $fn) {
-        $fh = \*STDIN;
-    } else {
-        open($fh,'-|','gzip','-dc',$fn) or
-            die "Unable to open $fn for reading: $!";
+## read the fastq files and store randomly selected reads in the
+## reservoir sampler
+my $total_counts_matched = 0;
+my $total_counts_unmatched = 0;
+my $matched_samples = [];
+my $unmatched_samples = [];
+OUTER: for my $i ($options{paired}?(0..floor(@files/2)):(0..$#files)) {
+    if ($options{paired}) {
+        $i *= 2;
     }
-    my $read_pos = 9999;
-    my $current_read;
-    my $read_id;
-    my $match_motif;
-    my $quality_ok = 0;
-    push @file_reads,[];
-    push @file_counts,[0,0];
-    while (<$fh>) {
-        $read_pos++;
-        if ($read_pos > 3) {
-            $read_pos = 0;
-            if ($quality_ok and defined $read_id) {
-                if ($match_motif) {
-                    # store matching read ids and count them per file
-                    push @{$file_reads[-1][0]},$read_id;
-                    $file_counts[-1][0]++;
-                    $total_counts[0]++;
-                } else {
-                    push @{$file_reads[-1][1]},$read_id;
-                    $file_counts[-1][1]++;
-                    $total_counts[1]++;
-                }
+    my $fh = open_fastq($files[$i]);
+    my $fh2 = open_fastq($files[$i+1]) if $options{paired};
+    while (not $fh->eof) {
+        # are we likely to even keep this read?
+        my $ent_match_rand = int rand($total_counts_matched+1);
+        my $ent_unmatch_rand = int rand($total_counts_unmatched+1);
+        if ($ent_match_rand > $max_samples and
+            $ent_unmatch_rand > $max_samples
+           ) {
+            skip_a_read($fh);
+            if ($options{paired}) {
+                skip_a_read($fh2);
             }
+            next;
         }
-        if ($read_pos == 0) {
-            $current_read = $_;
-            ($read_id) = $_ =~ /^(\S+)/;
-        } elsif ($read_pos == 1) {
-            $match_motif = $_ =~ $motif_regex;
-        } elsif ($read_pos == 3) {
-            # if the average quality is more than 15, keep the read.
-            # [That's pretty generous, actually.]
-            $quality_ok = sum(map {ord($_) - 33} split '',$_)/length($_) > 15;
+        my $read = read_a_read($fh);
+        my $matched = $read->{read} =~ $motif_regex;
+        my @entry = $read;
+        if ($options{paired}) {
+            my $pair = read_a_read($fh2);
+            if (not $matched) {
+                $matched = $pair->{read} =~ $motif_regex;
+            }
+            push @entry,$pair;
         }
-
+        if ($matched) {
+            $total_counts_matched++;
+            reservoir_sampler($matched_samples,
+                              $max_samples,
+                              \@entry,
+                              $total_counts_matched,
+                              $ent_match_rand,
+                             );
+        } else {
+            $total_counts_unmatched++;
+            reservoir_sampler($unmatched_samples,
+                              $max_samples,
+                              \@entry,
+                              $total_counts_unmatched,
+                              $ent_unmatch_rand,
+                             );
+        }
     }
-    close($fh);
+}
+print STDERR "There were ".($total_counts_unmatched+$total_counts_matched).
+    " reads in ".@files." files\n";
+print STDERR $total_counts_matched." contained the motif, ".
+    $total_counts_unmatched." did not\n";
+
+# shuffle the matching and unmatched reads
+@{$matched_samples} = shuffle(@{$matched_samples});
+while (@{$matched_samples} < $max_samples) {
+    push @{$matched_samples},@{$matched_samples};
+}
+@{$unmatched_samples} = shuffle(@{$unmatched_samples});
+while (@{$unmatched_samples} < $max_samples) {
+    push @{$unmatched_samples},@{$unmatched_samples};
 }
 
-my @file_keep_reads;
-## figure out the total reads and the proportion of matched and non-matched
-print STDERR "There were ".sum(@total_counts)." reads in ".scalar @file_counts." files\n";
-print STDERR $total_counts[0]." contained the motif, ".$total_counts[1]." did not\n";
-for my $i (0..$#{$options{reads}}) {
+# output sampled reads into the output files
+for my $i (0..$#output_files) {
     my $read_count = $options{reads}[$i];
-    for my $j (0..($options{samplings}-1)) {
-        my $kept_reads = 0;
-        while ($kept_reads < $read_count) {
-            my $m = rand > $options{motif_output_abundance} ? 1 : 0;
-            # choose a motif matching read ($m==0) or non-matching ($m==1)
-            # at random from the total set of reads
-            my $r = rand $total_counts[$m];
-            my $f = 0;
-            while ($r > $file_counts[$f][$m]) {
-                $r -= $file_counts[$f][$m];
+    for my $j (0..$#{$output_files[$i]}) {
+        for (1..$read_count) {
+            my ($matched_entry) = pop @{$matched_samples};
+            my ($entry) = pop @{$unmatched_samples};
+            if (rand(1) <= $options{motif_output_abundance}) {
+                $entry = $matched_entry;
             }
-            if ($file_keep_reads[$f]{$file_reads[$f][$m][$r]}{$i.'_'.$j}) {
-                next;
-            } else {
-                $file_keep_reads[$f]{$file_reads[$f][$m][$r]}{$i.'_'.$j} = 1;
-                $kept_reads++;
+            print {$output_files[$i][$j][0]} $entry->[0]{fastq};
+            if ($options{paired}) {
+                print {$output_files[$i][$j][1]} $entry->[1]{fastq};
             }
         }
     }
 }
 
-my $f = 0;
-for my $fn (@files) {
+use Data::Printer;
+
+# Ideally we would use a weighted random sampler, but because we only
+# know the output abundance and not the input abundance, we cannot use
+# weights
+sub reservoir_sampler {
+    my ($samples,$max_samples,$entry,$n_entries,$ent_rand) = @_;
+    if (@{$samples} < $max_samples) {
+        push @{$samples},$entry;
+        return;
+    }
+    if ($ent_rand <= $max_samples) {
+        $samples->[floor(rand(@{$samples}))] =
+            $entry;
+    }
+}
+
+sub skip_a_read {
     my $fh;
-    if (not defined $fn) {
-        $fh = \*STDIN;
-    } else {
-        open($fh,'-|','gzip','-dc',$fn) or
-            die "Unable to open $fn for reading: $!";
+    for (0..3) {
+        my $gline = <$fh>;
     }
-    my $read_pos = 999;
-    my $keep_read_id = 0;
-    while (<$fh>) {
-        $read_pos++;
-        if ($read_pos > 3) {
-            $read_pos = 0;
-        }
-        if ($read_pos == 0) {
-            $keep_read_id = 0;
-            my ($read_id) = $_ =~ /^(\S+)/;
-            if (exists $file_keep_reads[$f]{$read_id}) {
-                $keep_read_id = $read_id;
-            }
-        }
-        if ($keep_read_id) {
-            for my $ij (keys %{$file_keep_reads[$f]{$keep_read_id}}) {
-                my ($i,$j) = split '_',$ij;
-                print {$output_files[$i][$j]} $_;
-            }
-        }
-    }
-    close($fh);
-    $f++;
 }
 
+# read a single read from a fastq file
+sub read_a_read {
+    my ($fh) = @_;
 
+    # read four lines
+    my @read;
+    my $read = '';
+    while (<$fh>) {
+        $read .= $_;
+        chomp;
+        push @read, $_;
+        last if @read==4;
+    }
+    return if @read == 0;
+    die "Truncated fastq file" if @read != 4;
+    my ($read_id) = $read[0] =~ /^(\S+)/o;
+    my ($quality) = sum(map {ord($_) - 33} split '',$read[3])/length($read[3]);
+    return {quality => $quality,
+            id => $read_id,
+            read => $read[1],
+            fastq => $read
+           };
+}
+
+sub open_fastq {
+    my ($fn) = @_;
+    my $fh;
+    open($fh,'-|','gzip','-dc',$fn) or
+        die "Unable to open $fn for reading: $!";
+    return $fh;
+}
+
+sub open_output_files {
+    my %options = @_;
+    my $max_samples = 0;
+    my @output_files;
+    for my $i (0..$#{$options{reads}}) {
+        for my $j (0..($options{samplings}-1)) {
+            $max_samples += $options{reads}[$i];
+            my @fns;
+            for ($options{paired}?('_1','_2'):('')) {
+                push @fns,
+                    $options{output_prefix}.
+                    '_r'.$options{reads}[$i].
+                    '_s'.($j+1).$_.'.fastq';
+            }
+            for my $fn (@fns) {
+                push @{$output_files[$i][$j]},
+                    IO::File->new($fn,'w') or
+                        die "Unable to open $fn for writing: $!";
+            }
+        }
+    }
+    return ($max_samples,@output_files);
+}
 
 
 
