@@ -175,13 +175,13 @@ OUTER: for my $i ($options{paired}?(0..floor(@files/2)):(0..$#files)) {
         }
         my $read = read_a_read($fh);
         my $matched = $read->{read} =~ $motif_regex;
-        my @entry = $read;
+        my @entry = $read->{fastq};
         if ($options{paired}) {
             my $pair = read_a_read($fh2);
             if (not $matched) {
                 $matched = $pair->{read} =~ $motif_regex;
             }
-            push @entry,$pair;
+            push @entry,$pair->{fastq};
         }
         if ($matched) {
             $total_counts_matched++;
@@ -227,15 +227,13 @@ for my $i (0..$#output_files) {
             if (rand(1) <= $options{motif_output_abundance}) {
                 $entry = $matched_entry;
             }
-            print {$output_files[$i][$j][0]} $entry->[0]{fastq};
+            print {$output_files[$i][$j][0]} $entry->[0];
             if ($options{paired}) {
-                print {$output_files[$i][$j][1]} $entry->[1]{fastq};
+                print {$output_files[$i][$j][1]} $entry->[1];
             }
         }
     }
 }
-
-use Data::Printer;
 
 # Ideally we would use a weighted random sampler, but because we only
 # know the output abundance and not the input abundance, we cannot use
