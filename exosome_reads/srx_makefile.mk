@@ -34,7 +34,8 @@ SAMPLING=10
 READS=1000 5000 10000 50000
 FASTQ_FILES=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_r$(read)_s$(sample).fastq.gz))
 
-STAR_OPTIONS=--genomeLoad LoadAndKeep --sjdbGTFfile $(GTF) --quantMode GeneCounts
+# we'd like to use shared memory, but that's not supported with a GTFfile
+STAR_OPTIONS=--sjdbGTFfile $(GTF) --quantMode GeneCounts
 
 ifeq ($(NREADS),1)
 READ_BIASER_OPTS:=
