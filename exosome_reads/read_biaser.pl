@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # read_biaser.pl biases reads towards motifs
 # and is released under the terms of the GNU GPL version 3, or any
 # later version, at your option. See the file README and COPYING for
