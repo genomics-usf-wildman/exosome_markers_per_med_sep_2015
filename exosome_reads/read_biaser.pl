@@ -77,7 +77,6 @@ read_biaser.pl
 =cut
 
 use List::Util qw(sum);
-use IO::Uncompress::AnyUncompress;
 use vars qw($DEBUG);
 #use Math::Random;
 use List::Util qw(shuffle);
