@@ -44,7 +44,7 @@ endif
 
 
 make_fastq: ../read_biaser.pl $(SRR_FASTQ_FILES)
-	$(MODULE) load perl; \
+	$(MODULE) load perl/5.20.1; \
 	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
 		--output-prefix $(SRX) $(READ_BIASER_OPTS) $(SRR_FASTQ_FILES)
 	gzip *_r*_s*.fastq;
