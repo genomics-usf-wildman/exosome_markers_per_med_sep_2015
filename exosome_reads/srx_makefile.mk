@@ -14,11 +14,15 @@ include srx_info.mk
 
 ifeq ($(NREADS),1)
 SRR_FASTQ_FILES=$(foreach srr,$(SRRS),$(srr).fastq.gz)
+SRX_FASTQ_FILES=$(SRX).fastq.gz
 else
 SRR_FASTQ_FILES=$(foreach srr,$(SRRS),$(srr)_1.fastq.gz $(srr)_2.fastq.gz)
+SRX_FASTQ_FILES=$(SRX)_1.fastq.gz $(SRX)_2.fastq.gz
 endif
 
 make_srr_fastq: $(SRR_FASTQ_FILES)
+
+make_srx_fastq: $(SRX_FASTQ_FILES)
 
 ifeq ($(NREADS),1)
 $(SRR_FASTQ_FILES): %.fastq.gz:
@@ -30,9 +34,22 @@ else
 	fastq-dump --split-3 -B --gzip $*;
 endif
 
+ifeq ($(NREADS),1)
+$(SRX).fastq.gz: $(SRR_FASTQ_FILES)
+	pigz -dc $^ |pigz -c > $@
+else
+$(SRX)_1.fastq.gz: $(foreach srr,$(SRRS),$(srr)_1.fastq.gz)
+	pigz -dc $^ |pigz -c > $@
+
+$(SRX)_2.fastq.gz: $(foreach srr,$(SRRS),$(srr)_2.fastq.gz)
+	pigz -dc $^ |pigz -c > $@
+endif
+
+
+
 SAMPLING=10
 READS=1000 5000 10000 50000
-FASTQ_FILES=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_r$(read)_s$(sample).fastq.gz))
+FASTQ_FILES=$(SRX_FASTQ_FILES)
 
 # we'd like to use shared memory, but that's not supported with a GTFfile
 STAR_OPTIONS=--sjdbGTFfile $(GTF) --quantMode GeneCounts
@@ -44,11 +61,19 @@ READ_BIASER_OPTS:=--paired
 endif
 
 
-make_fastq: ../read_biaser.pl $(SRR_FASTQ_FILES)
-	$(MODULE) load perl/5.20.1; \
-	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
-		--output-prefix $(SRX) $(READ_BIASER_OPTS) $(SRR_FASTQ_FILES)
-	gzip *_r*_s*.fastq;
-	touch $@
+# make_fastq: ../read_biaser.pl $(SRR_FASTQ_FILES)
+# 	$(MODULE) load perl/5.20.1; \
+# 	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
+# 		--output-prefix $(SRX) $(READ_BIASER_OPTS) $(SRR_FASTQ_FILES)
+# 	gzip *_r*_s*.fastq;
+# 	touch $@
 
 include ../../rnaseq_workflow/common_makefile
+
+FPKM_GENES_ANALYSIS_FILES=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_r$(read)_s$(sample)_genes.fpkm_tracking))
+
+split_aligned_bams: ../read_biaser_bam.pl $(STAR_ALIGNMENT_FILES)
+	$(MODULE) load perl/5.20.1; \
+	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
+		--output-prefix  $(READ_BIASER_OPTS) $(SRR_FASTQ_FILES)
+	touch $@
