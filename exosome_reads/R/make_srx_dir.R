@@ -1,10 +1,19 @@
-library(tools)
-library(data.table)
+library("tools")
+library("data.table")
+library("yaml")
+args <- c("../tissue_expression/chosen_tissues",
+          "../tissue_specific_expression/categorized_samples",
+          "chosen_tissues.yaml")
 args <- commandArgs(trailingOnly=TRUE)
 
 load(args[1])
+load(args[2])
 
-for (srx in chosen.samples[,SRX]) {
+chosen.tissues <- data.table(tissues=yaml.load_file(args[3])$tissues)
+
+
+for (srx in categorized.samples[Sample_Group %in% chosen.tissues[,tissues] &
+                                grepl("^SRX",SRX),][,list(SRX=SRX[1]),by=Sample_Group][,SRX]) {
     if (!dir.exists(srx)) {
         dir.create(srx)
     }
