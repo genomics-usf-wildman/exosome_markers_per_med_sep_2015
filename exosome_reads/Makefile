@@ -19,11 +19,16 @@ make_fastq: $(patsubst %,%-make_fastq,$(SRX_FILES))
 
 make_srr_fastq: $(patsubst %,%-make_srr_fastq,$(SRX_FILES))
 
+make_srx_fastq: $(patsubst %,%-make_srx_fastq,$(SRX_FILES))
+
 $(patsubst %,%-make_fastq,$(SRX_FILES)): %-make_fastq: %
 	+make -C $* make_fastq
 
 $(patsubst %,%-make_srr_fastq,$(SRX_FILES)): %-make_srr_fastq: %
 	+make -C $* make_srr_fastq
+
+$(patsubst %,%-make_srx_fastq,$(SRX_FILES)): %-make_srx_fastq: %
+	+make -C $* make_srx_fastq
 
 srx.mk: write_srx.R ../tissue_expression/chosen_samples		\
 ../tissue_specific_expression/categorized_samples chosen_tissues.yaml
