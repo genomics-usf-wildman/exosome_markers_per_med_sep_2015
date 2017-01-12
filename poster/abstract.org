@@ -25,6 +25,16 @@
  treatment without biopsies, increasing the ability of clinicians to
  adapt treatment modalities to the individual patient.
 
+* Authors
+** Don Armstrong
+   Institute for Genomic Biology
+   University of Illinois at Urbana-Champaign
+** Monica Uddin
+   Institute for Genomic Biology
+   University of Illinois at Urbana-Champaign
+** Derek Wildman
+   Institute for Genomic Biology
+   University of Illinois at Urbana-Champaign
 * Concentration of RNA molecules in exosomes
   + http://www.journalofextracellularvesicles.net/index.php/jev/article/view/24858#F0005_24858
   + 10^8 particles
