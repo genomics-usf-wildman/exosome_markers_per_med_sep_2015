@@ -54,13 +54,6 @@ FASTQ_FILES=$(SRX_FASTQ_FILES)
 # we'd like to use shared memory, but that's not supported with a GTFfile
 STAR_OPTIONS=--sjdbGTFfile $(GTF) --quantMode GeneCounts
 
-ifeq ($(NREADS),1)
-READ_BIASER_OPTS:=
-else
-READ_BIASER_OPTS:=--paired
-endif
-
-
 # make_fastq: ../read_biaser.pl $(SRR_FASTQ_FILES)
 # 	$(MODULE) load perl/5.20.1; \
 # 	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
@@ -75,5 +68,5 @@ FPKM_GENES_ANALYSIS_FILES=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach 
 split_aligned_bams: ../read_biaser_bam.pl $(STAR_ALIGNMENT_FILES)
 	$(MODULE) load perl/5.20.1; \
 	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
-		--output-prefix  $(READ_BIASER_OPTS) $(SRR_FASTQ_FILES)
+		--output-prefix $(SRX)_split $(STAR_ALIGNMENT_FILES)
 	touch $@
