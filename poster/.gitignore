@@ -15,3 +15,5 @@ cache
 poster.lof
 poster.lot
 poster.toc
+*.rip
+references.bib
