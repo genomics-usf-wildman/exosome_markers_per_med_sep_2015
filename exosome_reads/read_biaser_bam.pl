@@ -229,7 +229,7 @@ sub output_sampled_reads {
     open($fh,'|-','samtools','view','-b','-o',$fn,'-') or
         die "Unable to open samtools view -b -o $fn - for writing: $!";
     print {$fh} $header;
-    for my $entry (sort { $a->[2] cmp $b->[2] || $a->[1] <=> $b->[2] }
+    for my $entry (sort { $a->[2] cmp $b->[2] || $a->[3] <=> $b->[3] }
                    @{$outputs}
                   ) {
         print {$fh} join("\t",@{$entry});
