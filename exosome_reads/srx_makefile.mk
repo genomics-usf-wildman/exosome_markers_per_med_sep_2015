@@ -68,6 +68,7 @@ include ../../rnaseq_workflow/common_makefile
 
 split_aligned_bams: ../read_biaser_bam.pl $(STAR_ALIGNMENT_FILES)
 	$(MODULE) load perl/5.20.1; \
+	$(MODULE) load samtools; \
 	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
 		--output-prefix $(SRX)_split $(STAR_ALIGNMENT_FILES)
 	touch $@
