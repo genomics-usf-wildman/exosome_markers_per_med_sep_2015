@@ -61,9 +61,10 @@ STAR_OPTIONS=--sjdbGTFfile $(GTF) --quantMode GeneCounts
 # 	gzip *_r*_s*.fastq;
 # 	touch $@
 
+FPKM_GENES_ANALYSIS_FILES=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample)_genes.fpkm_tracking))
+
 include ../../rnaseq_workflow/common_makefile
 
-FPKM_GENES_ANALYSIS_FILES=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_r$(read)_s$(sample)_genes.fpkm_tracking))
 
 split_aligned_bams: ../read_biaser_bam.pl $(STAR_ALIGNMENT_FILES)
 	$(MODULE) load perl/5.20.1; \
