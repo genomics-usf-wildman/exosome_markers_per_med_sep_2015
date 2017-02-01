@@ -113,7 +113,7 @@
 \doublespacing
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
-opts_chunk$set(dev="cairo_pdf",out.width="\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
+opts_chunk$set(dev="cairo_pdf",out.width="0.5\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
 opts_chunk$set(cache=TRUE, autodep=TRUE)
 options(device = function(file, width = 8, height = 7, ...) {
   cairo_pdf(tempfile(), width = width, height = height, ...)
@@ -127,6 +127,7 @@ library("xtable")
 library("caret")
 library("pROC")
 library("grid")
+library("scales")
 
 capwords <- function(s, strict = FALSE) {
     cap <- function(s) paste(toupper(substring(s, 1, 1)),
@@ -151,7 +152,23 @@ for (a in paste0("../tissue_specific_expression/",
 }
 tissue.specific.genes <- data.table(tissue.specific.genes)
 setkey(tissue.specific.genes,"gene")
+
+tissue.specific.genes[,type:="not specific"]
+tissue.specific.genes[,housekeeping:="not housekeeping"]
+tissue.specific.genes[possibly.specific==TRUE,type:="tissue specific"]
+tissue.specific.genes[tracking_id %in% housekeeping.genes.superset[,tracking_id] &
+                      possibly.specific==FALSE,housekeeping:="housekeeping"]
+tissue.specific.genes[tracking_id %in% housekeeping.genes.superset[,tracking_id] &
+                      possibly.specific==TRUE,housekeeping:="housekeeping and specific"]
+
+tissue.specific.genes[,type:=
+                          factor(type,
+                                 levels=c("not specific","tissue specific",
+                                     "housekeeping",
+                                     "housekeeping and specific"
+                                          ))]
 @ 
+
 
 <<specific.markers.plot.function,echo=FALSE,results="hide",warning=FALSE>>=
 specific.markers.plot <- function(tissue.name,genes) {
@@ -317,34 +334,43 @@ the remaining samples making up a testing set ($\approx 820$ samples).
 \subsection{Tissue Specific Genes and Housekeeping genes}
 
 \begin{figure}
-<<tissue.specificity.shape.figure,fig.width=8,fig.height=8,echo=FALSE>>=
-invisible(tissue.specific.genes[,type:="not specific"])
-invisible(tissue.specific.genes[,housekeeping:="not housekeeping"])
-invisible(tissue.specific.genes[possibly.specific==TRUE,type:="tissue specific"])
-invisible(tissue.specific.genes[tracking_id %in% housekeeping.genes.superset[,tracking_id] &
-                                 possibly.specific==FALSE,housekeeping:="housekeeping"])
-invisible(tissue.specific.genes[tracking_id %in% housekeeping.genes.superset[,tracking_id] &
-                          possibly.specific==TRUE,housekeeping:="housekeeping and specific"])
-
-invisible(tissue.specific.genes[,type:=
-                          factor(type,
-                                 levels=c("not specific","tissue specific",
-                                     "housekeeping",
-                                     "housekeeping and specific"
-                                          ))])
+<<tissue.specificity.shape.figure,fig.width=4,fig.height=4,echo=FALSE>>=
 print(ggplot(tissue.specific.genes[gi.max>0],
-             aes(y=specificity,x=gi.max,colour=type))+
+             aes(y=specificity,x=gi.max))+
       ##geom_point()+
       geom_hex(bins=50)+
+      geom_line(aes(x=x,y=y),inherit.aes=FALSE,
+                color="orange",
+                data=data.frame(x=c(10,10,tissue.specific.genes[,max(gi.max)]),
+                                y=c(1,0.98,0.98)))+
       ## stat_summary_2d(fun=function(x){length(x)},bins=100)+
-      geom_point(aes(colour=housekeeping),data=tissue.specific.genes[housekeeping!="not housekeeping",])+
-      scale_x_log10()+
+      geom_point(aes(colour=gsub("And","\nAnd",
+                                 capwords(housekeeping))),
+                 size=2,
+                 data=tissue.specific.genes[housekeeping!="not housekeeping",])+
+      scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                    labels = trans_format("log10", math_format(10^.x)))+
+      scale_color_brewer("Housekeeping",palette="Set2")+
+      scale_fill_continuous("Count")+
       xlab("Max Expression (FPKM)")+
-      ylab("Tissue Specificity")+
-      theme(legend.position="top")
+      ylab("Tissue Specificity Index")+
+      theme(legend.position=c(1,0),
+            legend.justification=c(1,0),
+            legend.box.just="right"
+            )
     )
+
 @ 
-\caption{Shape of tissue specific genes}
+\caption{Tissue specificity index versus maximum expression in one
+  tissue. Genes above and to the right of the orange lines are tissue
+  specific. Genes which have been previously
+  identified~\cite{Eisenberg.ea2013:Humanhousekeepinggenesrevisited}
+  as housekeeping genes are generally not tissue specific, with the
+  exception of %
+  %
+  \Sexpr{tissue.specific.genes[housekeeping=="housekeeping and specific",gene]}.%
+  %
+}
 \label{fig:tissue_specific_shape}
 \end{figure}
 
