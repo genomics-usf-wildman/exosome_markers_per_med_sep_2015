@@ -78,8 +78,8 @@ brain_specific_markers: R/brain_specific.R categorized_samples combined_read_cou
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
-tissue_specific_markers: R/tissue_specific_expression.R interesting_gene_reads_wide \
-	interesting_isoform_reads_wide
+tissue_specific_markers: R/tissue_specific_expression.R	\
+	gene_grouping_variables isoform_grouping_variables
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
@@ -99,15 +99,28 @@ brain_highly_expressed.txt: brain_specific_markers ../common_r/array_to_text.R
 housekeeping_genes.txt: housekeeping_genes ../common_r/array_to_text.R
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< housekeeping.genes $@
 
-interesting_gene_reads: R/subset_reads.R categorized_samples \
-	combined_read_counts additional_interesting_genes.txt
+interesting_gene_reads: R/subset_reads.R categorized_samples	\
+	combined_read_counts additional_interesting_genes.txt		\
+	gene_grouping_variables
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
-interesting_isoform_reads: R/subset_reads.R categorized_samples \
-	combined_isoform_reads additional_interesting_genes.txt
+interesting_isoform_reads: R/subset_reads.R categorized_samples	\
+	combined_isoform_reads additional_interesting_genes.txt		\
+	isoform_grouping_variables
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+gene_grouping_variables: R/calculate_grouping_variables.R	\
+	categorized_samples combined_read_counts
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+isoform_grouping_variables: R/calculate_grouping_variables.R	\
+	categorized_samples combined_isoform_reads
+	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
 
 housekeeping_genes_eisenberg_2003.html:
 	wget -O $@ "https://web.archive.org/web/20070805203436/http://compugen.co.il/supp_info/Housekeeping_genes.html"

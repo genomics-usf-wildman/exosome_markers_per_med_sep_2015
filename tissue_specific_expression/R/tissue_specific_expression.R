@@ -1,14 +1,15 @@
 library(data.table)
 library(reshape2)
 
-args <- c("interesting_gene_reads_wide",
-          "interesting_isoform_reads_wide",
+args <- c("gene_grouping_variables",
+          "isoform_grouping_variables",
           "tissue_specific_markers")
 
 args <- commandArgs(trailingOnly=TRUE)
 
 load(args[1])
 load(args[2])
+gc()
 
 ### combine sample name and srx into the gene counts file
 .narm.mean <- function(x){
@@ -39,40 +40,38 @@ tissue.specificity.index <- function(expression){
 ##' specific tissue that this isoform/gene describes, or NA if it does
 ##' not describe a specific tissue
 ##' @author Don Armstrong
-specific.genes.isoforms <- function(data,min.specificity=0.98,min.max.expression=10) {
+specific.genes.isoforms <- function(grouping,min.specificity=0.98,min.max.expression=10) {
     ## calculate the specificity index
-    genes <- data[,gene_short_name]
-    tracking.id=data[,tracking_id]
-    data <- data[,-c(1:2),with=FALSE]
-    if (any(colnames(data)=="universal human reference")) {
-        data <- data[,colnames(data)!="universal human reference",with=FALSE]
-    }
-    specificity <-
-        apply(data,1,tissue.specificity.index)
-    per.gi.max <-
-        apply(data,1,max)
-    per.gi.which.max <-
-        apply(data,1,which.max)
-    possibly.specific <-
-        (per.gi.max >= min.max.expression &
-             specificity >= min.specificity)
-    possibly.specific[is.na(possibly.specific)] <-
-        FALSE
+    tissue.specific.gi <- copy(grouping)
+    tissue.specific.gi[,possibly.specific:=FALSE]
+    tissue.specific.gi[tissue.specificity.index >= min.specificity &
+                       max >= min.max.expression,possibly.specific:=TRUE]
+    tissue.specific.gi[,tissue:=as.character(NA)]
+    tissue.specific.gi[possibly.specific==TRUE,
+                       tissue:=tissue_max]
     tissue.specific.gi <-
-        data.frame(gene=genes,
-                   tracking_id=tracking.id,
-                   tissue=NA,
-                   gi.max=per.gi.max,
-                   specificity=specificity,
-                   possibly.specific=possibly.specific,
-                   gi.which.max=per.gi.which.max)
-    tissue.specific.gi$tissue[possibly.specific] <- 
-        colnames(data)[per.gi.which.max][possibly.specific]
+        tissue.specific.gi[order(tissue,-max),
+                           list(gene=gene_short_name,
+                                tracking_id=tracking_id,
+                                tissue=tissue,
+                                gi.max=max,
+                                specificity=tissue.specificity.index,
+                                log.specificity=tissue.specificity.index.log2,
+                                possibly.specific=possibly.specific,
+                                gi.which.max=tissue_max,
+                                mean=mean,
+                                mean.log2=mean.log2,
+                                var=var,
+                                var.log2=var.log2,
+                                entropy=entropy,
+                                entropy.log2=entropy.log2)]
     return(tissue.specific.gi)
-}    
+}
 
-tissue.specific.genes <- data.table(specific.genes.isoforms(interesting.gene.reads.wide))
-tissue.specific.isoforms <- data.table(specific.genes.isoforms(interesting.isoform.reads.wide))
+tissue.specific.genes <-
+    specific.genes.isoforms(gene.grouping.variables)
+tissue.specific.isoforms <-
+    specific.genes.isoforms(isoform.grouping.variables)
 
 save(tissue.specific.genes,
      tissue.specific.isoforms,
