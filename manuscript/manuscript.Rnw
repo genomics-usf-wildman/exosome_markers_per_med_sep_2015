@@ -88,11 +88,8 @@
 \doublespacing
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
-opts_chunk$set(dev="CairoPDF",out.width="0.5\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
-opts_chunk$set(cache=TRUE, autodep=TRUE)
-options(device = function(file, width = 8, height = 7, ...) {
-  CairoPDF(tempfile(), width = width, height = height, ...)
-})
+opts_chunk$set(out.width="0.5\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
+opts_chunk$set(dev="cairo_pdf",cache=TRUE, autodep=TRUE)
 options(scipen = -1, digits = 2)
 library("data.table")
 library("ggplot2")
@@ -144,6 +141,13 @@ tissue.specific.genes[,type:=
                                           ))]
 @ 
 
+<<compact_tissue_name,echo=FALSE,results="hide">>=
+compact_tissue_name <- function(tissue) {
+    gsub("nhlf","human lung fibroblasts",
+         gsub("cultured cells","",
+         tissue))
+}
+@ 
 
 <<specific.markers.plot.function,echo=FALSE,results="hide",warning=FALSE>>=
 specific.markers.plot <- function(tissue.name,genes) {
