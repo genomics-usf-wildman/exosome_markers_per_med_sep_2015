@@ -449,6 +449,22 @@ $\tau_g \le 0.93$ with the exception of
 \Sexpr{tissue.specific.genes[housekeeping=="housekeeping and specific",gene]}
 %
 
+\subsubsection{Genes which are housekeeping and specific}
+
+\DLA{Why are these two genes housekeeping and specific?}
+
+\begin{figure}
+<<housekeeping_tissue_specific_markers_figure,fig.width=4,fig.height=4,echo=FALSE>>=
+print(specific.markers.barplot(genes=c("MT-TM","C19orf28"))
+      + xlab("Housekeeping Tissue\nSpecific Genes")
+      + theme(legend.position="Top")
+      + ylab("Tissue"))
+@
+\caption{Genes which are tissue specific but are also housekeeping genes}
+\label{fig:housekeeping_tissue_specific_genes}
+\end{figure}
+
+
 \subsection{Uterus and Placenta Specific Genes}
 
 <<uterus.specific.markers.table,results="asis",echo=FALSE>>=
