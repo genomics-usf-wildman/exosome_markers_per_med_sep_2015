@@ -153,10 +153,12 @@ specific.markers.plot <- function(tissue.name,genes) {
     interesting.tissues <- 
         colnames(interesting.gene.reads.wide)[
          apply(interesting.gene.reads.wide[genes,-(1:2),with=FALSE],1,
-                             function(x){order(-x)[2]+2})]
-    
+                             function(x){order(-x)[1:2]+2})]
+    interesting.tissues <-
+        c(tissue.name,
+          interesting.tissues)
     interesting.tissues <- 
-        c("gene_short_name",tissue.name,unique(interesting.tissues))
+        c("gene_short_name",unique(interesting.tissues))
     
     tissue.specific.gene.reads <- 
         data.table(melt(interesting.gene.reads.wide[genes,interesting.tissues,with=FALSE],
@@ -165,8 +167,14 @@ specific.markers.plot <- function(tissue.name,genes) {
                         value.name="FPKM"
                         ))
     tissue.specific.gene.reads[,`log_2(FPKM)`:=log2(FPKM+1)]
-    gene.levels <- 
-        unique(as.character(tissue.specific.genes[tissue==tissue.name][order(specificity),gene]))
+    if (!is.null(tissue.name)) {
+        gene.levels <- 
+            unique(as.character(tissue.specific.genes[tissue==tissue.name][order(specificity),gene]))
+    } else {
+        gene.levels <- 
+            unique(as.character(tissue.specific.genes[tissue %in% interesting.tissues
+                                                      ][order(specificity),gene]))
+    }
     tissue.specific.gene.reads[,gene_short_name:=factor(gene_short_name,levels=gene.levels)]
     return(ggplot(tissue.specific.gene.reads,
                   aes(y=gene_short_name,
