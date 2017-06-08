@@ -230,12 +230,24 @@ specific.markers.barplot <- function(tissue.name,genes) {
 
 \section{Abstract}
 
+In this paper we want to show that given a population of \ac{EV}
+
+\textbf{Can we determine the proportions and identities of
+  the tissue(s) of \ac{EV} origin?}
+
+\textbf{Can assign differential expression to a particular tissue of
+  origin in \ac{EV}?}
+
+\textbf{Housekeeping genes are not tissue specific}
+
+\textbf{Additional genes which are likely to be housekeeping but were
+  not identified by previous papers}
 
 \section{Introduction}
 
-\subsection{Housekeeping genes}
+\subsection{\ac{EV} background}
 
-\subsection{Cell free RNA and Exosomes in Diagnostics}
+\paragraph{What are \acsp{EV}}
 
 \Ac{EV} are small (40-1000nm) compartments that can be found in
 blood, saliva, and urine. \Ac{EV} originate from the plasma membrane
@@ -244,7 +256,35 @@ lipids, mRNA, miRNA, and many other non-coding RNAs. Because \ac{EV}
 contain mRNA from the cell of origin and can be obtained without
 invasive procedures, they are a promising remote sensor of the
 transcriptome of tissues that would otherwise be inaccessible.
-    
+
+\paragraph{Where are \acsp{EV} found?}
+
+\paragraph{How are \acsp{EV} formed and what are their contents}
+
+
+\subsection{\acsp{EV} will enable routine liquid biopsies}
+
+\paragraph{Existing work showing promise of \acsp{EV}}
+
+\paragraph{Existing methods require tumor/disease specific marker which is unique to that tissue}
+
+\subsection{Identifying tissues of origin}
+
+\paragraph{Existing protein surface markers}
+
+\DLA{Is there a database of tissue/cell specific markers?}
+
+\paragraph{Issues of single cell transcriptome heterogeneity}
+
+\paragraph{Tissue specificity index}
+
+
+\subsection{Assigning differential expression}
+
+\subsection{Housekeeping genes}
+
+\subsection{Cell free RNA and Exosomes in Diagnostics}
+
 One requirement for remotely sensing the transcriptome is identifying
 the source tissue of a specific \ac{EV}. To identify the source tissue
 of a specific \ac{EV}, we have identified miRNA and mRNA markers which
@@ -257,6 +297,7 @@ specificity index.
 
 \subsection{Tissue RNA-seq}
 
+\subsubsection{Samples}
 \Sexpr{star.logs[grepl("Number of input reads",field),sum(as.numeric(value))]} %
 %
 RNAseq reads from %
@@ -278,7 +319,8 @@ well as uterine (GSE50599,
 \cite{Chan.ea2014:Assessmentofmyometrialtranscriptome}) and placenta
 (GSE66622, \cite{Hughes.ea2015:Evaluatingintra-andinter-individual})
 samples from the \ac{SRA}.
-    
+
+\subsubsection{Alignment and Calling}
 Reads were aligned to \textit{Homo sapiens} reference genome GRCh38
 with Ensembl annotation release 80 using STAR v2.4.2a
 \cite{Dobin.ea2013:STARultrafastuniversalRNA-seq} and called using
@@ -293,7 +335,11 @@ For samples where the reads were not publicly available (GTEx and
 some Roadmap Epigenomics samples), the RPKM were taken from publicly
 available result files (see code for details). 
 
-\subsection{Tissue Specificity}
+\subsubsection{Normalization}
+
+\subsection{Tissue Specific Markers}
+
+\subsubsection{Tissue Specificity Index}
 
 The tissue specificity index for gene $g$ ($\tau_g$) is
     
