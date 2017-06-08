@@ -673,9 +673,9 @@ reduced.reads <- function(fpkms,num.reads) {
     if (!any(non.zero)) {
         return(fpkms)
     }
-    inc.prob <- inclusionprobabilities(fpkms[non.zero],1)
+    inc.prob <- sampling::inclusionprobabilities(fpkms[non.zero],1)
     ret.val[non.zero] <-
-        apply(sapply(1:(num.reads/1),function(y){UPrandomsystematic(inc.prob,0)}),1,sum)
+        apply(sapply(1:(num.reads/1),function(y){sampling::UPrandomsystematic(inc.prob,0)}),1,sum)
     names(ret.val) <- names(fpkms)
     ret.val
 }
