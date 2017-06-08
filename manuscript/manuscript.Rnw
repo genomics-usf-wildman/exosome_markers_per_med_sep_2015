@@ -507,7 +507,7 @@ uterus specific. MIR1914 is actually placenta specific, as is MIR126.
 
 This occured because the placenta FPKMs we based the original list on
 did not properly align against miRNA or snRNA
-\fref{tab:missing_uterus_specific_genes}. The uterus calls also appear
+\cref{tab:missing_uterus_specific_genes}. The uterus calls also appear
 to be wrong or cooked; for example, SNORD5 has counts of 7000ish which
 are not inside of its confidence interval. This may be indicative of a
 off-by-one error or something else that is screwed up in their file.
