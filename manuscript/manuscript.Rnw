@@ -636,25 +636,25 @@ legend("bottomright",       legend=paste0(capwords(a)," ",c("1 Read","10 Reads",
        col=c("brown","green","#002058", "#E87722"),
        lwd=2)
 }
-### grid.text(c("A","B","C","D"),
-###           x=unit(c(0,0.5,0,0.5),"npc"),
-###           y=unit(c(1,1,0.5,0.5),"npc"),
-###           just=c("left","top"),
-###           gp=gpar(fontsize=32)
-###           )
+grid.text(c("A","B","C","D"),
+          x=unit(c(0,0.5,0,0.5),"npc"),
+          y=unit(c(1,1,0.5,0.5),"npc"),
+          just=c("left","top"),
+          gp=gpar(fontsize=32)
+          )
 
 @
 
-\caption{\ac{ROC} curve of the placenta \ac{SVM} (A) and
-  uterus \ac{SVM} (B) . Both \ac{SVM} are highly effective at
+\caption{\ac{ROC} curve of the placenta \ac{SVM} (A,C) and
+  uterus \ac{SVM} (B,D) . Both \ac{SVM} are highly effective at
   distinguishing between samples of uterus origin and non-uterus
-  origin.
+  origin using the entirety of reads from a sample.
   %
-  \ac{ROC} curve of reduced reads in Placenta and
-  Uterus samples with the indicated number of total reads. Reads were
+  \ac{ROC} curve of reduced reads in Placenta (C) and
+  Uterus (D) samples with the indicated number of total reads. Reads were
   reduced by sampling reads for each sample weighted by the FPKM
   measured for each sample, and run using the same trained SVM
-  depicted in Figure \ref{fig:plac_ut_full_roc}. %
+  from the full runs.
   % 
   The placenta \ac{SVM} is fairly accurate at distinguishing between
   samples of placental origin and non-placental origin even when the
