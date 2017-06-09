@@ -40,7 +40,7 @@ for (group in c("uterus","placenta")) {
     gene.fpkm.wide[[group]] <-
         as.character(gene.fpkm.wide$Sample_Group)
     gene.fpkm.wide[[group]][!(gene.fpkm.wide[[group]] %in% group)] <-
-        paste0("not ",group)
+        paste0("not_",group)
     gene.fpkm.wide[[group]] <-
         as.factor(gene.fpkm.wide[[group]])
 }
