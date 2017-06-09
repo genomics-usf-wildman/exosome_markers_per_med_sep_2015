@@ -463,7 +463,7 @@ $\tau_g \le 0.93$ with the exception of
 
 \begin{figure}
 <<housekeeping_tissue_specific_markers_figure,fig.width=4,fig.height=4,echo=FALSE>>=
-print(specific.markers.barplot(genes=c("MT-TM","C19orf28"))
+print(specific.markers.barplot(genes=tissue.specific.genes[housekeeping=="housekeeping and specific",gene])
       + xlab("Housekeeping Tissue\nSpecific Genes")
       + theme(legend.position="Top")
       + ylab("Tissue"))
