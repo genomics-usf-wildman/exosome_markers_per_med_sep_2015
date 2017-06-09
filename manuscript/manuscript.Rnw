@@ -409,7 +409,7 @@ the remaining samples making up a testing set ($\approx 820$ samples).
 
 \begin{figure}
 <<tissue.specificity.shape.figure,fig.width=4,fig.height=4,echo=FALSE>>=
-print(ggplot(tissue.specific.genes[gi.max>0],
+print(ggplot(tissue.specific.genes[gi.max>=1],
              aes(y=specificity,x=gi.max))+
       ##geom_point()+
       geom_hex(bins=50)+
