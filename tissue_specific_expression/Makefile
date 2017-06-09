@@ -100,15 +100,25 @@ housekeeping_genes.txt: housekeeping_genes ../common_r/array_to_text.R
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< housekeeping.genes $@
 
 interesting_gene_reads: R/subset_reads.R categorized_samples	\
-	combined_read_counts additional_interesting_genes.txt		\
-	gene_grouping_variables
+	combined_read_counts gene_grouping_variables
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
+all_interesting_gene_reads: R/subset_reads.R categorized_samples	\
+	combined_read_counts gene_grouping_variables					\
+	additional_interesting_genes.txt
+	$(MODULE) load R; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
 interesting_isoform_reads: R/subset_reads.R categorized_samples	\
-	combined_isoform_reads additional_interesting_genes.txt		\
-	isoform_grouping_variables
+	combined_isoform_reads isoform_grouping_variables
 	$(MODULE) load R/3.2.0; \
+	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
+
+all_interesting_isoform_reads: R/subset_reads.R categorized_samples	\
+	combined_isoform_reads isoform_grouping_variables				\
+	additional_interesting_genes.txt
+	$(MODULE) load R; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
 gene_grouping_variables: R/calculate_grouping_variables.R	\

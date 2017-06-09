@@ -1,11 +1,10 @@
 library("data.table")
 library("reshape2")
-library("entropy")
 
 args <- c("categorized_samples",
-          "combined_read_counts",
-          "gene_grouping_variables",
-          "interesting_gene_reads"
+          "interesting_gene_reads",
+          "additional_interesting_genes.txt",
+          "all_interesting_gene_reads"
           )
 
 args <- commandArgs(trailingOnly=TRUE)
@@ -15,8 +14,12 @@ args <- commandArgs(trailingOnly=TRUE)
 load(args[1])
 ## combined_read_counts
 load(args[2])
-## gene_grouping_variables
+## interesting_gene_reads
 load(args[3])
+## additional_interesting_genes.txt
+additional.genes <- fread(args[4])
+## gene_grouping_variables
+load(args[4])
 
 
 is.genes <- TRUE
@@ -32,20 +35,27 @@ setkey(categorized.samples,"SRX")
 ## share a common name
 if (is.genes) {
     read.counts <- gene.counts
+    interesting.reads <- interesting.gene.reads
     grouping.variables <- gene.grouping.variables
     rm(gene.counts)
 } else {
     read.counts <- isoform.counts
+    interesting.reads <- interesting.isoform.reads
     grouping.variables <- isoform.grouping.variables
     rm(isoform.counts)
 }
 
-setnames(read.counts,"srx","SRX")
-setkey(read.counts,"SRX")
+additional.tracking.ids <-
+    read.counts[!duplicated(tracking_id),
+                list(tracking_id,gene_short_name)][gene_short_name %in%
+                                                   additional.genes[[1]]][[1]]
 
-min.entropy <- 2
-min.tissue.specificity <- 0.985
-min.expression <- 10
+additional.tracking.ids <-
+    additional.tracking.ids[!(additional.tracking.ids %in%
+                              interesting.reads[,unique(tracking_id)])]
+setkey(read.counts,"tracking_id")
+read.counts <-
+    read.counts[additional.tracking.ids]
 
 ### combine sample name and srx into the gene counts file
 combined.reads <-
@@ -54,22 +64,17 @@ combined.reads <-
                                             gene_short_name,
                                             FPKM,
                                             SRX)]]
-interesting.groups <-
-    grouping.variables[((entropy >= min.entropy |
-                         tissue.specificity.index >= min.tissue.specificity) &
-                        max >= min.expression),
-                       tracking_id]
-
-setkey(combined.reads,"tracking_id") 
 
 interesting.reads <-
-    combined.reads[interesting.groups,
-                   list(Sample_Group,
-                        SRX,
-                        tracking_id,
-                        gene_id,
-                        gene_short_name,
-                        FPKM)]
+    rbindlist(list(interesting.reads,
+                   combined.reads[,
+                                  list(Sample_Group,
+                                       SRX,
+                                       tracking_id,
+                                       gene_id,
+                                       gene_short_name,
+                                       FPKM)]))
+
 if (is.genes) {
     interesting.gene.reads <- interesting.reads
     save(interesting.gene.reads,

@@ -18,3 +18,5 @@ combined_star_logs
 EG.name.txt
 svm_test_results
 tissue_specific_markers.txt
+all_interesting_gene_reads
+all_interesting_isoform_reads
