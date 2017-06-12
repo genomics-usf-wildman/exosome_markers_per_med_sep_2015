@@ -141,6 +141,39 @@ tissue.specific.genes[,type:=
                                           ))]
 @ 
 
+<<genes.table.sanitize,echo=FALSE,results="hide">>=
+genes.table.sanitize <- function(str){
+    return(str)
+}
+link.gene.names <- function(gene){
+    return(paste0("\\href{http://www.ensembl.org/Homo_sapiens/Gene/Summary?g=",
+                  gene,"}{",
+                  "\\textit{",xtable.sanitize.text(gene),
+                  "}}"))
+}
+xtable.sanitize.text <- function(str){
+    result <- str
+    result <- gsub("\\\\", "SANITIZE.BACKSLASH", result)
+    result <- gsub("$", "\\$", result, fixed = TRUE)
+    result <- gsub(">", "$>$", result, fixed = TRUE)
+    result <- gsub("<", "$<$", result, fixed = TRUE)
+    result <- gsub("|", "$|$", result, fixed = TRUE)
+    result <- gsub("{", "\\{", result, fixed = TRUE)
+    result <- gsub("}", "\\}", result, fixed = TRUE)
+    result <- gsub("%", "\\%", result, fixed = TRUE)
+    result <- gsub("&", "\\&", result, fixed = TRUE)
+    result <- gsub("_", "\\_", result, fixed = TRUE)
+    result <- gsub("#", "\\#", result, fixed = TRUE)
+    result <- gsub("^", "\\verb|^|", result, fixed = TRUE)
+    result <- gsub("~", "\\~{}", result, fixed = TRUE)
+    result <- gsub("SANITIZE.BACKSLASH", "$\\backslash$",
+                   result, fixed = TRUE)
+    return(result)
+}
+source("/home/don/projects/xtable/pkg/R/print.xtable.R")
+
+@ 
+
 <<compact_tissue_name,echo=FALSE,results="hide">>=
 compact_tissue_name <- function(tissue) {
     gsub("nhlf","human lung fibroblasts",
@@ -472,20 +505,35 @@ print(specific.markers.barplot(genes=tissue.specific.genes[housekeeping=="housek
 \label{fig:housekeeping_tissue_specific_genes}
 \end{figure}
 
+<<tissue.specific.markers.table,results="hide",echo=FALSE>>=
+tissue.specific.markers.table <- function(tissue,legend,min.gi=0) {
+    this.tissue <- tissue
+    temp <-
+        tissue.specific.genes[tissue==this.tissue & gi.max >= min.gi,
+                              list(Gene=link.gene.names(gene),
+                                   "{Tissue specificity}"=specificity,
+                                   "{Mean Expression}"=gi.max)]
+    setorder(temp,-`{Mean Expression}`)
+    print(xtable(temp,
+                 align=c("r","c","S","S[table-format=1.0]"),
+                 caption=legend,
+                 label=paste0("tab:",tissue,"_specific_genes")),
+          sanitize.text.function=genes.table.sanitize,
+          include.rownames=FALSE,
+          booktabs=TRUE,
+          floating=TRUE,
+          )
+    rm(temp)
+}
+
+@ 
+
 
 \subsection{Uterus and Placenta Specific Genes}
 
 <<uterus.specific.markers.table,results="asis",echo=FALSE>>=
-temp <- tissue.specific.genes[tissue=="uterus",
-                              list(gene,tissue,specificity,gi.max)]
-setorder(temp,-gi.max)
-setnames(temp,c("Gene","Tissue","Tissue Specificity","Mean Expression"))
-print(xtable(temp,
-             caption="Uterus specific genes",
-             label="tab:uterus_specific_genes"),
-      include.rownames=FALSE,
-      )
-rm(temp)
+tissue.specific.markers.table(tissue="uterus",
+                              legend="Uterus specific genes")
 @ 
 
 \begin{figure}
@@ -533,17 +581,12 @@ rm(temp)
 @ 
 
 <<placenta.specific.markers.table,results="asis",echo=FALSE>>=
-temp <- tissue.specific.genes[tissue=="placenta" & gi.max > 100,
-                              list(gene,tissue,specificity,gi.max)]
-setorder(temp,-gi.max)
-setnames(temp,c("Gene","Tissue","Tissue Specificity","Mean Expression"))
-print(xtable(temp,
-             caption="Placenta specific genes",label="tab:placenta_specific_genes"),
-      include.rownames=FALSE,
-      floating=FALSE,
-      tabular.environment="longtable"
-      )
-rm(temp)
+tissue.specific.markers.table(tissue="placenta",
+                              legend=
+                                  paste0("Placenta specific genes with expression ",
+                                         "$\\ge 100$ ordered by median expression in placenta."),
+                              min.gi=100
+                              )
 @ 
 
 \begin{figure}
