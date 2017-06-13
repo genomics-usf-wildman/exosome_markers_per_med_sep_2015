@@ -49,7 +49,7 @@ endif
 
 SAMPLING=10
 READS=1000 5000 10000 50000
-FASTQ_FILES=$(SRX_FASTQ_FILES)
+FASTQ_FILES:=$(SRX_FASTQ_FILES)
 
 # we'd like to use shared memory, but that's not supported with a GTFfile
 STAR_OPTIONS=--sjdbGTFfile $(GTF) --quantMode GeneCounts
@@ -61,14 +61,27 @@ STAR_OPTIONS=--sjdbGTFfile $(GTF) --quantMode GeneCounts
 # 	gzip *_r*_s*.fastq;
 # 	touch $@
 
-FPKM_GENES_ANALYSIS_FILES=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample)_genes.fpkm_tracking))
+FPKM_GENES_ANALYSIS_FILES:=
 
 include ../../rnaseq_workflow/common_makefile
 
-
-split_aligned_bams: ../read_biaser_bam.pl $(STAR_ALIGNMENT_FILES)
+$(STAR_ALIGNMENT_FILES): $(SRX)_%: ../read_biaser_bam.pl $(STAR_ALIGNMENT_FILES)
 	$(MODULE) load samtools; \
 	$(MODULE) load perl; \
 	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
 		--output-prefix $(SRX)_split $(STAR_ALIGNMENT_FILES)
-	touch $@
+
+SPLIT_FPKM_GENES_ANALYSIS_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample)_genes.fpkm_tracking))
+
+call: $(SPLIT_FPKM_GENES_ANALYSIS_FILES)
+
+
+%_genes.fpkm_tracking %_isoforms.fpkm_tracking %_skipped.gtf %_transcripts.gtf: %.bam \
+	$(CUFFLINKS_GTF)
+	mkdir -p $(*)_cufflinks;
+	$(MODULE) load cufflinks/2.2.1; \
+	cufflinks -o $(*)_cufflinks $(CUFFLINKS_OPTIONS) -p $(CORES) -G $(wordlist 2,2,$^) $<
+	for file in genes.fpkm_tracking isoforms.fpkm_tracking skipped.gtf transcripts.gtf; do \
+		mv $(*)_cufflinks/$${file} $(*)_$${file}; \
+	done;
+	rm $(*)_cufflinks -rf;
