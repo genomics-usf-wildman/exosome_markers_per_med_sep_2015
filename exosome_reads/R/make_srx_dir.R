@@ -11,6 +11,8 @@ load(args[2])
 
 chosen.tissues <- data.table(tissues=yaml.load_file(args[3])$tissues)
 
+## SRR786752 claims to be paired, but only has one read
+chosen.samples[SRX=="SRX252261",SRR:=gsub(",SRR786752","",SRR)]
 
 for (srx in categorized.samples[Sample_Group %in% chosen.tissues[,tissues] &
                                 grepl("^SRX",SRX),][,list(SRX=SRX[1]),by=Sample_Group][,SRX]) {
