@@ -65,10 +65,14 @@ FPKM_GENES_ANALYSIS_FILES:=
 
 include ../../rnaseq_workflow/common_makefile
 
-$(STAR_ALIGNMENT_FILES): $(SRX)_%: ../read_biaser_bam.pl $(STAR_ALIGNMENT_FILES)
+SPLIT_STAR_ALIGNMENT_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample).bam))
+
+SPLIT_STAR_ALIGNMENT_FILES_PATTERN:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample)%bam))
+
+$(SPLIT_STAR_ALIGNMENT_FILES_PATTERN): $(SRX)_star%bam ../read_biaser_bam.pl 
 	$(MODULE) load samtools; \
 	$(MODULE) load perl; \
-	$< $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
+	../read_biaser_bam.pl $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
 		--output-prefix $(SRX)_split $(STAR_ALIGNMENT_FILES)
 
 SPLIT_FPKM_GENES_ANALYSIS_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample)_genes.fpkm_tracking))
