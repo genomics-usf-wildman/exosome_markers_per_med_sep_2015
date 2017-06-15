@@ -77,8 +77,7 @@ $(SPLIT_STAR_ALIGNMENT_FILES_PATTERN): %_star.bam ../read_biaser_bam.pl
 
 SPLIT_FPKM_GENES_ANALYSIS_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample)_genes.fpkm_tracking))
 
-call: $(SPLIT_FPKM_GENES_ANALYSIS_FILES)
-
+split_call: $(SPLIT_FPKM_GENES_ANALYSIS_FILES)
 
 %_genes.fpkm_tracking %_isoforms.fpkm_tracking %_skipped.gtf %_transcripts.gtf: %.bam \
 	$(CUFFLINKS_GTF)
