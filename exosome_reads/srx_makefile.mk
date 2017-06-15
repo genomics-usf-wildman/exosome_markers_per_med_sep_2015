@@ -63,18 +63,6 @@ STAR_OPTIONS=--sjdbGTFfile $(GTF) --quantMode GeneCounts
 
 FPKM_GENES_ANALYSIS_FILES:=
 
-include ../../rnaseq_workflow/common_makefile
-
-SPLIT_STAR_ALIGNMENT_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample).bam))
-
-SPLIT_STAR_ALIGNMENT_FILES_PATTERN:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),%_split_r$(read)_s$(sample).bam))
-
-$(SPLIT_STAR_ALIGNMENT_FILES_PATTERN): %_star.bam ../read_biaser_bam.pl 
-	$(MODULE) load samtools; \
-	$(MODULE) load perl; \
-	../read_biaser_bam.pl $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
-		--output-prefix $(SRX)_split $(STAR_ALIGNMENT_FILES)
-
 SPLIT_FPKM_GENES_ANALYSIS_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample)_genes.fpkm_tracking))
 
 split_call: $(SPLIT_FPKM_GENES_ANALYSIS_FILES)
@@ -88,3 +76,16 @@ split_call: $(SPLIT_FPKM_GENES_ANALYSIS_FILES)
 		mv $(*)_cufflinks/$${file} $(*)_$${file}; \
 	done;
 	rm $(*)_cufflinks -rf;
+
+include ../../rnaseq_workflow/common_makefile
+
+SPLIT_STAR_ALIGNMENT_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample).bam))
+
+SPLIT_STAR_ALIGNMENT_FILES_PATTERN:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),%_split_r$(read)_s$(sample).bam))
+
+$(SPLIT_STAR_ALIGNMENT_FILES_PATTERN): %_star.bam ../read_biaser_bam.pl 
+	$(MODULE) load samtools; \
+	$(MODULE) load perl; \
+	../read_biaser_bam.pl $(foreach read,$(READS),--read $(read)) --samplings $(SAMPLING) \
+		--output-prefix $(SRX)_split $(STAR_ALIGNMENT_FILES)
+
