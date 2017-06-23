@@ -83,6 +83,8 @@ SPLIT_STAR_ALIGNMENT_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreac
 
 SPLIT_STAR_ALIGNMENT_FILES_PATTERN:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),%_split_r$(read)_s$(sample).bam))
 
+split_bams: $(SPLIT_STAR_ALIGNMENT_FILES)
+
 $(SPLIT_STAR_ALIGNMENT_FILES_PATTERN): %_star.bam ../read_biaser_bam.pl 
 	$(MODULE) load samtools; \
 	$(MODULE) load perl; \
