@@ -68,7 +68,7 @@ SPLIT_FPKM_GENES_ANALYSIS_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(f
 split_call: $(SPLIT_FPKM_GENES_ANALYSIS_FILES)
 
 %_genes.fpkm_tracking %_isoforms.fpkm_tracking %_skipped.gtf %_transcripts.gtf: %.bam \
-	$(CUFFLINKS_GTF)
+	$(GTF)
 	mkdir -p $(*)_cufflinks;
 	$(MODULE) load cufflinks/2.2.1; \
 	cufflinks -o $(*)_cufflinks $(CUFFLINKS_OPTIONS) -p $(CORES) -G $(wordlist 2,2,$^) $<
