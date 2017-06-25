@@ -67,6 +67,8 @@ SPLIT_FPKM_GENES_ANALYSIS_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(f
 
 split_call: $(SPLIT_FPKM_GENES_ANALYSIS_FILES)
 
+include ../../rnaseq_workflow/common_makefile
+
 %_genes.fpkm_tracking %_isoforms.fpkm_tracking %_skipped.gtf %_transcripts.gtf: %.bam \
 	$(GTF)
 	mkdir -p $(*)_cufflinks;
@@ -76,8 +78,6 @@ split_call: $(SPLIT_FPKM_GENES_ANALYSIS_FILES)
 		mv $(*)_cufflinks/$${file} $(*)_$${file}; \
 	done;
 	rm $(*)_cufflinks -rf;
-
-include ../../rnaseq_workflow/common_makefile
 
 SPLIT_STAR_ALIGNMENT_FILES:=$(foreach sample,$(shell seq 1 $(SAMPLING)),$(foreach read,$(READS),$(SRX)_split_r$(read)_s$(sample).bam))
 
