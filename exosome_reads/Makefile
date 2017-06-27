@@ -35,3 +35,22 @@ srx.mk: write_srx.R ../tissue_expression/chosen_samples		\
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
+get_results:
+	rsync -avmP \
+		--include '**_genes.fpkm_tracking' \
+		--include '**_isoforms.fpkm_tracking' \
+		--include '**_star/Log.final.out' \
+		--include '**_star/ReadsPerGene.out.tab' \
+		--include '**_star/*.bg' \
+		--include '**_star.bw' \
+		--include '**_kallisto/abundance.tsv' \
+		--include '**_kallisto/run_info.json' \
+		--include '**_kallisto.txt' \
+        --include '**_kallisto_info.txt' \
+		--include '**trinity_diamond.txt' \
+		--include '**_trinity_align_rsem_isoforms.txt' \
+        --include '**_fastqc.html' \
+        --include '**_fastqc.zip' \
+        --include '**/' \
+	    --exclude '**' \
+		$(CLUSTER_HOST)/ .;
