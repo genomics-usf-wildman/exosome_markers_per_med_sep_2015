@@ -83,57 +83,43 @@ combined_isoform_reads: combine_isoform_fpkms.R $(ISOFORM_FPKMS) \
 	$(MODULE) load R/3.2.0; \
 	$(R) $(ROPTS) -f $< --args $(wordlist 2,$(words $^),$^) $@
 
-BOWTIE_INDEX_DIR=ref_seqs/
-
-STAR_INDEX_DIR=$(BOWTIE_INDEX_DIR)/star/
-star_indexes:
-	$(MODULE) load STAR/2.4.2a; \
-	mkdir -p $(STAR_INDEX_DIR); \
-	STAR --genomeFastaFiles $(BOWTIE_INDEX_DIR)$(FASTA) \
-		--runMode genomeGenerate \
-		--limitGenomeGenerateRAM 128849018880 \
-		--runThreadN $(CORES) \
-		--genomeDir $(STAR_INDEX_DIR)
-
-bowtie_indexes: $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2 $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.fa
-
-$(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.1.bt2: $(BOWTIE_INDEX_DIR)$(FASTA)
-	$(MODULE) load bowtie2/2.1.0; \
-	bowtie2-build $< $(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2
-
-$(BOWTIE_INDEX_DIR)$(ALIGNMENT_SPECIES)_bt2.fa: $(BOWTIE_INDEX_DIR)$(FASTA)
-	rm -f $@
-	ln $< $@
-
-$(BOWTIE_INDEX_DIR)$(FASTA): $(BOWTIE_INDEX_DIR)$(FASTA).gz
-	gzip -dc $< > $@
-
-$(BOWTIE_INDEX_DIR)$(GTF): $(BOWTIE_INDEX_DIR)$(GTF).gz
-	gzip -dc $< > $@
-
-remote_files: $(BOWTIE_INDEX_DIR)$(FASTA).gz $(BOWTIE_INDEX_DIR)$(GTF).gz
-
-fasta: $(BOWTIE_INDEX_DIR)$(FASTA)
-
-gtf: $(BOWTIE_INDEX_DIR)$(GTF)
-
-$(BOWTIE_INDEX_DIR)$(FASTA).gz:
-	mkdir -p $(BOWTIE_INDEX_DIR)
-	rsync -avP "rsync://ftp.ensembl.org/ensembl/pub/release-80/fasta/$(ALIGNMENT_SPECIES)/dna/$(FASTA).gz" $@
-
-$(BOWTIE_INDEX_DIR)$(GTF).gz:
-	mkdir -p $(BOWTIE_INDEX_DIR)
-	rsync -avP "rsync://ftp.ensembl.org/ensembl/pub/release-80/gtf/$(ALIGNMENT_SPECIES)/$(GTF).gz" $@
-
-
 get_results:
 	rsync -avmP \
 		--include '**_genes.fpkm_tracking' \
 		--include '**_isoforms.fpkm_tracking' \
-		--include '**Log.final.out' \
+		--include '**_star/Log.final.out' \
+		--include '**_star/ReadsPerGene.out.tab' \
+		--include '**_kallisto/abundance.tsv' \
+		--include '**_kallisto/run_info.json' \
+		--include '**_kallisto.txt' \
+		--include '**_kallisto_info.txt' \
+		--include '**trinity_diamond.txt' \
+		--include '**_trinity_align_rsem_isoforms.txt' \
+        --include '**_fastqc.html' \
+        --include '**_fastqc.zip' \
         --include '**/' \
 	    --exclude '**' \
-		$(CLUSTER_HOST)/tissue_expression/ .;
+		$(CLUSTER_HOST)/ .;
+
+submit_trimmed_fastqc: $(patsubst %,%-submit_trimmed_fastqc,$(SRX_FILES))
+
+submit_alignment: $(patsubst %,%-submit_alignment,$(SRX_FILES))
+
+submit_call: $(patsubst %,%-submit_call,$(SRX_FILES))
+
+submit_kallisto_call: $(patsubst %,%-submit_kallisto_call,$(SRX_FILES))
+
+$(patsubst %,%-submit_trimmed_fastqc,$(SRX_FILES)): %-submit_trimmed_fastqc:
+	+make -C $* submit_trimmed_fastqc
+
+$(patsubst %,%-submit_alignment,$(SRX_FILES)): %-submit_alignment:
+	+make -C $* submit_alignment
+
+$(patsubst %,%-submit_call,$(SRX_FILES)): %-submit_call:
+	+make -C $* submit_call
+
+$(patsubst %,%-submit_kallisto_call,$(SRX_FILES)): %-submit_kallisto_call:
+	+make -C $* submit_kallisto_call
 
 get_srr: $(patsubst %,%-get_srr,$(SRX_FILES))
 
