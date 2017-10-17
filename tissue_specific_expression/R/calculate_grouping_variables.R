@@ -76,8 +76,9 @@ tissue.specificity.index <- function(expression){
                (length(expression)-1))
 }
 
-which.max.both <- function(expression,group) {
-    return(group[which.max(expression)])
+which.max.both <- function(expression,group,names=list("tissue_max"=1,"tissue_max_2nd"=2)) {
+    temp <- group[order(expression,decreasing=TRUE)]
+    lapply(names,function(x){temp[x]})
 }
 
 combined.reads.mean <-
@@ -89,19 +90,23 @@ rm(combined.reads)
 
 grouping.variables <-
     combined.reads.mean[Sample_Group!="universal human reference",
-                        list(gene_id=gene_id[1],
-                             gene_short_name=gene_short_name[1],
-                              entropy=calculate.entropy(mean_FPKM),
-                             entropy.log2=calculate.entropy(log2(mean_FPKM+1)),
-                             max=max(mean_FPKM,na.rm=TRUE),
-                             var=var(mean_FPKM,na.rm=TRUE),
-                             var.log2=var(log2(mean_FPKM+1),na.rm=TRUE),
-                             mean=mean(mean_FPKM,na.rm=TRUE),
-                             mean.log2=mean(log2(mean_FPKM+1),na.rm=TRUE),
-                             tissue_max=which.max.both(mean_FPKM,Sample_Group),
-                             tissue.specificity.index=tissue.specificity.index(mean_FPKM),
-                             tissue.specificity.index.log2=tissue.specificity.index(log2(mean_FPKM+1))
-                             ),
+                        c(list(gene_id=gene_id[1],
+                               gene_short_name=gene_short_name[1],
+                               entropy=calculate.entropy(mean_FPKM),
+                               entropy.log2=calculate.entropy(log2(mean_FPKM+1)),
+                               max=max(mean_FPKM,na.rm=TRUE),
+                               max_2nd=-sort.int(-mean_FPKM,partial=2)[2]
+                               var=var(mean_FPKM,na.rm=TRUE),
+                               var.log2=var(log2(mean_FPKM+1),na.rm=TRUE),
+                               mean=mean(mean_FPKM,na.rm=TRUE),
+                               mean.log2=mean(log2(mean_FPKM+1),na.rm=TRUE)),
+                          which.max.both(mean_FPKM,
+                                         Sample_Group,
+                                         names=list(tissue_max=1,
+                                                    tissue_max_2nd=2)),
+                          list(tissue.specificity.index=tissue.specificity.index(mean_FPKM),
+                               tissue.specificity.index.log2=tissue.specificity.index(log2(mean_FPKM+1))
+                               )),
                         by=list(tracking_id)]
 
 if (is.genes) {
