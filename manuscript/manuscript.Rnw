@@ -28,8 +28,8 @@
 \usepackage[backend=biber,natbib=true,hyperref=true,citestyle=numeric-comp,style=nature,autocite=inline]{biblatex}
 \addbibresource{references.bib}
 \usepackage[noblocks,auth-sc]{authblk}
-\usepackage[hyperfigures,bookmarks,colorlinks]{hyperref}
-%\usepackage[hyperfigures,bookmarks,colorlinks,citecolor=black,filecolor=black,linkcolor=black,urlcolor=black]{hyperref}
+% \usepackage[hyperfigures,bookmarks,colorlinks]{hyperref}
+\usepackage[hyperfigures,bookmarks,colorlinks,citecolor=black,filecolor=black,linkcolor=black,urlcolor=black]{hyperref}
 % Floats at end for journals
 % \usepackage[nolists,figuresfirst,nomarkers,heads,nofighead,notabhead]{endfloat}
 % \AtBeginFigures{\section*{Figure Legends}\renewcommand{\efloatseparator}{\hbox{}}}
@@ -89,7 +89,7 @@
 
 <<load.libraries,echo=FALSE,results="hide",warning=FALSE,message=FALSE,error=FALSE,cache=FALSE>>=
 opts_chunk$set(out.width="0.5\\textwidth",out.height="0.7\\textheight",out.extra="keepaspectratio")
-opts_chunk$set(dev="cairo_pdf",cache=TRUE, autodep=TRUE)
+opts_chunk$set(dev="CairoPDF",cache=TRUE, autodep=TRUE)
 options(scipen = -1, digits = 2)
 library("data.table")
 library("ggplot2")
@@ -111,10 +111,10 @@ capwords <- function(s, strict = FALSE) {
 @ 
 
 
-<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=file.info(paste0("../tissue_specific_expression/",c("tissue_specific_markers","interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced","housekeeping_genes_superset")))[,"mtime"]>>=
+<<load.data,echo=FALSE,results="hide",warning=FALSE,cache.extra=file.info(paste0("../tissue_specific_expression/",c("tissue_specific_markers","all_interesting_gene_reads_wide","combined_star_logs","svm_test_results","svm_test_results_reduced","housekeeping_genes_superset")))[,"mtime"]>>=
 for (a in paste0("../tissue_specific_expression/",
                  c("tissue_specific_markers",
-                   "interesting_gene_reads_wide",
+                   "all_interesting_gene_reads_wide",
                    "combined_star_logs",
                    "svm_test_results",
                    "svm_test_results_reduced",
@@ -228,14 +228,17 @@ specific.markers.plot <- function(tissue.name,genes) {
            + scale_y_discrete("", expand = c(0, 0))
            + theme_grey(base_size=14)
            + theme(legend.position = "top",
-                   axis.ticks = element_blank(),
+                   axis.ticks.y = element_blank(),
+                   axis.ticks.x = element_blank(),
                    panel.grid=element_blank(),
                    panel.border=element_blank(),
                    panel.background=element_blank(),
                    plot.background=element_blank(),
                    plot.margin=unit(c(1,1,1,1),"mm"),
                    axis.text.y = element_text(size=10,face="italic"),
-                   axis.text.x = element_text(size=9,angle = 30, hjust = 1, vjust=1))
+                   axis.text.x = element_text(size=9,angle = 40,
+                                              hjust = 1, vjust=1,
+                                              margin=unit(c(0,0,0,0),"cm")))
            )
 }
 @ 
@@ -511,15 +514,20 @@ tissue.specific.markers.table <- function(tissue,legend,min.gi=0) {
     temp <-
         tissue.specific.genes[tissue==this.tissue & gi.max >= min.gi,
                               list(Gene=link.gene.names(gene),
-                                   "{Tissue specificity}"=specificity,
-                                   "{Mean Expression}"=gi.max)]
-    setorder(temp,-`{Mean Expression}`)
-    print(xtable(temp,
-                 align=c("r","c","S","S[table-format=1.0]"),
+                                   specificity,
+                                   gi=gi.max)]
+    setorder(temp,-gi)
+    print(xtable(temp[,list(Gene,
+                            "{\\multicolumn{1}{p{1.5cm}}{\\centering Tissue \\\\ specificity }}"=
+                            specificity,
+                            "{\\multicolumn{1}{p{1.5cm}}{\\centering Mean \\\\ Expression }}"=
+                                gi)],
+                 align=c("r","c","S[table.format=1.2]","S[table-format=5.0,round-mode=places,round-precision=0]"),
                  caption=legend,
                  label=paste0("tab:",tissue,"_specific_genes")),
           sanitize.text.function=genes.table.sanitize,
           include.rownames=FALSE,
+          size="\\footnotesize",
           booktabs=TRUE,
           floating=TRUE,
           )
@@ -583,9 +591,10 @@ rm(temp)
 <<placenta.specific.markers.table,results="asis",echo=FALSE>>=
 tissue.specific.markers.table(tissue="placenta",
                               legend=
-                                  paste0("Placenta specific genes with expression ",
-                                         "$\\ge 100$ ordered by median expression in placenta."),
-                              min.gi=100
+                                  paste0("Placenta specific genes ($\\tau_g \\ge 0.98$) ",
+                                         "with expression ",
+                                         "$\\ge 300$ ordered by mean expression in placenta."),
+                              min.gi=300
                               )
 @ 
 

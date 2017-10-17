@@ -5,7 +5,7 @@ R ?= R
 ROPTS=-q --no-save --no-restore-data
 
 MANUSCRIPT_TEX_DEPS=../tissue_specific_expression/tissue_specific_markers	\
-../tissue_specific_expression/interesting_gene_reads_wide					\
+../tissue_specific_expression/all_interesting_gene_reads_wide				\
 ../tissue_specific_expression/combined_star_logs							\
 ../tissue_specific_expression/svm_test_results								\
 ../tissue_specific_expression/svm_test_results_reduced						\
