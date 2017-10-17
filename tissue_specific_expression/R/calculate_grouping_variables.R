@@ -95,7 +95,7 @@ grouping.variables <-
                                entropy=calculate.entropy(mean_FPKM),
                                entropy.log2=calculate.entropy(log2(mean_FPKM+1)),
                                max=max(mean_FPKM,na.rm=TRUE),
-                               max_2nd=-sort.int(-mean_FPKM,partial=2)[2]
+                               max_2nd=-sort.int(-mean_FPKM,partial=2)[2],
                                var=var(mean_FPKM,na.rm=TRUE),
                                var.log2=var(log2(mean_FPKM+1),na.rm=TRUE),
                                mean=mean(mean_FPKM,na.rm=TRUE),
