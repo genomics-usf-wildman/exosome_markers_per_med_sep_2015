@@ -4,7 +4,7 @@ include ../mk/variables.mk
 
 VPATH=R
 
-all: svm_classification tissue_specific_markers
+all: svm_classification tissue_specific_markers all_interesting_gene_reads_wide
 
 ## eventually, this file should be downloadable from somewhere like
 ## dryad; in the meantime, it will be made available from one of my
@@ -166,5 +166,5 @@ housekeeping_genes_superset.txt: housekeeping_genes_superset ../common_r/array_t
 
 
 %_reads_wide: %_reads R/wide_reads.R 
-	$(MODULE) load R/3.2.0; \
+	$(MODULE) load R; \
 	$(R) $(ROPTS) -f $(wordlist 2,2,$^) --args $< $@
